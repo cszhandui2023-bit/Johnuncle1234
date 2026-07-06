@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>轻背单词</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f1e8;
+      --ink: #17201c;
+      --muted: #66706a;
+      --line: #d8d0c2;
+      --paper: #fffaf0;
+      --accent: #1f7a68;
+      --accent-strong: #14574a;
+      --blue: #2d64b3;
+      --red: #b84b4b;
+      --shadow: 0 18px 50px rgba(31, 42, 35, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(135deg, rgba(31, 122, 104, 0.12), transparent 35%),
+        linear-gradient(315deg, rgba(45, 100, 179, 0.10), transparent 35%),
+        var(--bg);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px 36px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(30px, 5vw, 56px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(74px, 1fr));
+      gap: 8px;
+      width: min(360px, 100%);
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 240, 0.75);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .study-panel,
+    .side-panel {
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 240, 0.86);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .study-panel {
+      padding: 18px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .mode-tabs {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f1eadf;
+    }
+
+    .tab,
+    .ghost,
+    .primary,
+    .danger {
+      min-height: 42px;
+      border: 0;
+      border-radius: 7px;
+      padding: 0 14px;
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    .tab {
+      background: transparent;
+    }
+
+    .tab.active {
+      background: var(--paper);
+      box-shadow: 0 2px 8px rgba(31, 42, 35, 0.12);
+      color: var(--accent-strong);
+      font-weight: 700;
+    }
+
+    .ghost {
+      border: 1px solid var(--line);
+      background: transparent;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+    }
+
+    .danger {
+      background: #fff2f0;
+      color: var(--red);
+      border: 1px solid #efc4c1;
+    }
+
+    .progress-line {
+      height: 10px;
+      border-radius: 999px;
+      background: #e6ded2;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+      transition: width 220ms ease;
+    }
+
+    .card {
+      min-height: 430px;
+      display: grid;
+      align-content: center;
+      gap: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      padding: clamp(22px, 5vw, 42px);
+      text-align: center;
+    }
+
+    .word-meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .word {
+      margin: 0;
+      font-size: clamp(48px, 9vw, 92px);
+      line-height: 0.95;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .phonetic {
+      color: var(--blue);
+      font-size: 20px;
+    }
+
+    .answer {
+      min-height: 96px;
+      display: grid;
+      place-items: center;
+      gap: 8px;
+      color: var(--ink);
+    }
+
+    .meaning {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 38px);
+      font-weight: 800;
+    }
+
+    .example {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .hidden-answer {
+      color: var(--muted);
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      width: min(420px, 100%);
+      justify-self: center;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .actions button {
+      min-height: 50px;
+    }
+
+    .side-panel {
+      padding: 16px;
+    }
+
+    .side-panel h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .word-list {
+      display: grid;
+      gap: 8px;
+      max-height: 300px;
+      overflow: auto;
+      padding-right: 4px;
+      margin-bottom: 18px;
+    }
+
+    .word-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.38);
+    }
+
+    .word-row b {
+      display: block;
+    }
+
+    .word-row small {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      background: #e7f4ef;
+      color: var(--accent-strong);
+    }
+
+    .badge.miss {
+      background: #fff2f0;
+      color: var(--red);
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 128px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fffcf7;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    .side-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .empty {
+      min-height: 430px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      padding: 28px;
+    }
+
+    @media (max-width: 860px) {
+      header,
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        display: grid;
+      }
+
+      .stats {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        padding: 18px 12px 28px;
+      }
+
+      .actions,
+      .side-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        display: grid;
+      }
+
+      .mode-tabs {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .ghost {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>轻背单词</h1>
+        <p class="subtitle">每天一小组，翻卡片、记错词、再复习。</p>
+      </div>
+      <section class="stats" aria-label="学习统计">
+        <div class="stat"><strong id="seenCount">0</strong><span>已练</span></div>
+        <div class="stat"><strong id="knownCount">0</strong><span>记住</span></div>
+        <div class="stat"><strong id="missedCount">0</strong><span>错词</span></div>
+      </section>
+    </header>
+
+    <main>
+      <section class="study-panel">
+        <div class="toolbar">
+          <div class="mode-tabs" aria-label="学习模式">
+            <button class="tab active" id="allMode" type="button">全部单词</button>
+            <button class="tab" id="missedMode" type="button">只看错词</button>
+          </div>
+          <button class="ghost" id="shuffleBtn" type="button">换一组顺序</button>
+        </div>
+
+        <div class="progress-line" aria-hidden="true">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div id="cardSlot"></div>
+      </section>
+
+      <aside class="side-panel">
+        <h2>今日词库</h2>
+        <div class="word-list" id="wordList"></div>
+
+        <h2>添加自己的单词</h2>
+        <label for="customWords">每行一个：英文,中文,音标或提示</label>
+        <textarea id="customWords" placeholder="serendipity,意外发现美好事物,好运的发现&#10;resilient,有韧性的,遇到困难还能恢复"></textarea>
+        <div class="side-actions">
+          <button class="primary" id="addWordsBtn" type="button">加入词库</button>
+          <button class="danger" id="resetBtn" type="button">重置进度</button>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const defaultWords = [
+      { word: "curious", meaning: "好奇的", hint: "/ˈkjʊriəs/", example: "A curious mind learns faster." },
+      { word: "brave", meaning: "勇敢的", hint: "/breɪv/", example: "Be brave enough to try." },
+      { word: "gentle", meaning: "温柔的", hint: "/ˈdʒentl/", example: "She gave a gentle smile." },
+      { word: "focus", meaning: "专注", hint: "/ˈfoʊkəs/", example: "Focus on one thing first." },
+      { word: "improve", meaning: "提高，改善", hint: "/ɪmˈpruːv/", example: "Small steps improve your English." },
+      { word: "habit", meaning: "习惯", hint: "/ˈhæbɪt/", example: "Reviewing words can become a habit." },
+      { word: "patient", meaning: "有耐心的", hint: "/ˈpeɪʃnt/", example: "Be patient with yourself." },
+      { word: "memory", meaning: "记忆", hint: "/ˈmeməri/", example: "Sleep helps memory." },
+      { word: "simple", meaning: "简单的", hint: "/ˈsɪmpl/", example: "Keep the first version simple." },
+      { word: "daily", meaning: "每日的", hint: "/ˈdeɪli/", example: "Daily practice works." }
+    ];
+
+    const storageKey = "word-card-v1";
+    const state = loadState();
+    let deck = [];
+    let index = 0;
+    let showingAnswer = false;
+    let mode = "all";
+
+    const cardSlot = document.querySelector("#cardSlot");
+    const wordList = document.querySelector("#wordList");
+    const progressFill = document.querySelector("#progressFill");
+    const seenCount = document.querySelector("#seenCount");
+    const knownCount = document.querySelector("#knownCount");
+    const missedCount = document.querySelector("#missedCount");
+    const allMode = document.querySelector("#allMode");
+    const missedMode = document.querySelector("#missedMode");
+    const shuffleBtn = document.querySelector("#shuffleBtn");
+    const addWordsBtn = document.querySelector("#addWordsBtn");
+    const resetBtn = document.querySelector("#resetBtn");
+    const customWords = document.querySelector("#customWords");
+
+    function loadState() {
+      const saved = localStorage.getItem(storageKey);
+      if (!saved) {
+        return {
+          words: defaultWords,
+          known: {},
+          missed: {},
+          seen: {}
+        };
+      }
+
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          words: Array.isArray(parsed.words) && parsed.words.length ? parsed.words : defaultWords,
+          known: parsed.known || {},
+          missed: parsed.missed || {},
+          seen: parsed.seen || {}
+        };
+      } catch {
+        return {
+          words: defaultWords,
+          known: {},
+          missed: {},
+          seen: {}
+        };
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function wordId(item) {
+      return item.word.toLowerCase().trim();
+    }
+
+    function makeDeck() {
+      const source = mode === "missed"
+        ? state.words.filter(item => state.missed[wordId(item)])
+        : [...state.words];
+
+      deck = source;
+      if (index >= deck.length) index = 0;
+      showingAnswer = false;
+    }
+
+    function shuffleDeck() {
+      makeDeck();
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      index = 0;
+      showingAnswer = false;
+      render();
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      index = 0;
+      makeDeck();
+      render();
+    }
+
+    function render() {
+      allMode.classList.toggle("active", mode === "all");
+      missedMode.classList.toggle("active", mode === "missed");
+      renderStats();
+      renderList();
+      renderCard();
+    }
+
+    function renderStats() {
+      seenCount.textContent = Object.keys(state.seen).length;
+      knownCount.textContent = Object.keys(state.known).length;
+      missedCount.textContent = Object.keys(state.missed).length;
+      const percent = deck.length ? ((index + 1) / deck.length) * 100 : 0;
+      progressFill.style.width = `${Math.min(percent, 100)}%`;
+    }
+
+    function renderList() {
+      wordList.innerHTML = "";
+      state.words.forEach(item => {
+        const id = wordId(item);
+        const row = document.createElement("div");
+        row.className = "word-row";
+        const status = state.missed[id] ? "错词" : state.known[id] ? "记住" : "新词";
+        const badgeClass = state.missed[id] ? "badge miss" : "badge";
+        row.innerHTML = `
+          <div>
+            <b>${escapeHtml(item.word)}</b>
+            <small>${escapeHtml(item.meaning)}</small>
+          </div>
+          <span class="${badgeClass}">${status}</span>
+        `;
+        wordList.appendChild(row);
+      });
+    }
+
+    function renderCard() {
+      if (!deck.length) {
+        cardSlot.innerHTML = `
+          <div class="empty">
+            <div>
+              <h2>现在没有错词</h2>
+              <p>可以切回“全部单词”，或者先把一些词标记为没记住。</p>
+            </div>
+          </div>
+        `;
+        progressFill.style.width = "0%";
+        return;
+      }
+
+      const item = deck[index];
+      const id = wordId(item);
+      cardSlot.innerHTML = `
+        <article class="card">
+          <div class="word-meta">第 ${index + 1} / ${deck.length} 个</div>
+          <h2 class="word">${escapeHtml(item.word)}</h2>
+          <div class="phonetic">${escapeHtml(item.hint || "点击查看意思")}</div>
+          <div class="answer">
+            ${showingAnswer ? `
+              <p class="meaning">${escapeHtml(item.meaning)}</p>
+              <p class="example">${escapeHtml(item.example || "自己试着造一个句子。")}</p>
+            ` : `
+              <div class="hidden-answer">先在心里想中文意思，再点“看答案”。</div>
+            `}
+          </div>
+          <div class="actions">
+            <button class="ghost" id="showBtn" type="button">${showingAnswer ? "收起答案" : "看答案"}</button>
+            <button class="primary" id="knowBtn" type="button">记住了</button>
+            <button class="danger" id="missBtn" type="button">没记住</button>
+          </div>
+        </article>
+      `;
+
+      document.querySelector("#showBtn").addEventListener("click", () => {
+        showingAnswer = !showingAnswer;
+        renderCard();
+      });
+
+      document.querySelector("#knowBtn").addEventListener("click", () => {
+        state.seen[id] = true;
+        state.known[id] = true;
+        delete state.missed[id];
+        saveState();
+        nextCard();
+      });
+
+      document.querySelector("#missBtn").addEventListener("click", () => {
+        state.seen[id] = true;
+        state.missed[id] = true;
+        delete state.known[id];
+        saveState();
+        nextCard();
+      });
+    }
+
+    function nextCard() {
+      showingAnswer = false;
+      index = deck.length ? (index + 1) % deck.length : 0;
+      if (mode === "missed") makeDeck();
+      render();
+    }
+
+    function addCustomWords() {
+      const lines = customWords.value
+        .split("\n")
+        .map(line => line.trim())
+        .filter(Boolean);
+
+      const newWords = lines.map(line => {
+        const [word, meaning, hint] = line.split(",").map(part => part && part.trim());
+        if (!word || !meaning) return null;
+        return {
+          word,
+          meaning,
+          hint: hint || "自定义单词",
+          example: "Try making your own sentence."
+        };
+      }).filter(Boolean);
+
+      if (!newWords.length) {
+        customWords.placeholder = "格式像这样：hello,你好,/həˈloʊ/";
+        return;
+      }
+
+      const existing = new Set(state.words.map(wordId));
+      newWords.forEach(item => {
+        if (!existing.has(wordId(item))) state.words.push(item);
+      });
+
+      customWords.value = "";
+      mode = "all";
+      index = 0;
+      makeDeck();
+      saveState();
+      render();
+    }
+
+    function resetProgress() {
+      state.known = {};
+      state.missed = {};
+      state.seen = {};
+      index = 0;
+      showingAnswer = false;
+      makeDeck();
+      saveState();
+      render();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    allMode.addEventListener("click", () => setMode("all"));
+    missedMode.addEventListener("click", () => setMode("missed"));
+    shuffleBtn.addEventListener("click", shuffleDeck);
+    addWordsBtn.addEventListener("click", addCustomWords);
+    resetBtn.addEventListener("click", resetProgress);
+
+    makeDeck();
+    render();
+  </script>
+</body>
+</html>
