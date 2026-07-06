@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>全球广告创意生成器</title>
+  <style>
+    :root {
+      --lg-red: #A50034;
+      --deep: #17131a;
+      --ink: #27222b;
+      --muted: #746b79;
+      --line: #eadfe5;
+      --soft: #fff5f8;
+      --card: #ffffff;
+      --gold: #d89a2b;
+      --blue: #275efe;
+      --green: #087f5b;
+      --shadow: 0 22px 60px rgba(87, 32, 55, 0.13);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(165, 0, 52, 0.12), transparent 34%),
+        linear-gradient(135deg, #fff 0%, #fff7fa 45%, #f7f7fb 100%);
+      min-height: 100vh;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 34px 0 42px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .hero-card, .panel, .output-card {
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(234, 223, 229, 0.9);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero-card { padding: 34px; position: relative; overflow: hidden; }
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      right: -70px;
+      top: -70px;
+      background: rgba(165, 0, 52, 0.12);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: var(--lg-red);
+      background: var(--soft);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .en-note {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .en-note.light { color: rgba(255,255,255,0.7); }
+    .eyebrow span { color: #9b6879; font-size: 11px; }
+
+    /* inline english annotation next to labels */
+    .en-inline {
+      display: inline;
+      margin-left: 5px;
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      vertical-align: middle;
+    }
+
+    h1 {
+      margin: 18px 0 12px;
+      font-size: clamp(30px, 4.3vw, 54px);
+      line-height: 1.05;
+      color: var(--deep);
+      letter-spacing: -0.045em;
+    }
+
+    .h1-en {
+      display: block;
+      margin-top: 6px;
+      font-size: clamp(13px, 1.4vw, 18px);
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: var(--muted);
+    }
+
+    .hero-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+      max-width: 620px;
+    }
+
+    .sample-box {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 310px;
+      background: linear-gradient(145deg, #211823, #4a1328 58%, #A50034);
+      color: #fff;
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sample-box::before {
+      content: "";
+      position: absolute;
+      inset: auto -80px -100px auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .sample-title { font-size: 14px; opacity: 0.78; margin-bottom: 16px; }
+    .sample-line { font-size: 30px; line-height: 1.18; font-weight: 800; letter-spacing: -0.03em; position: relative; }
+    .sample-line-en { display: block; margin-top: 6px; font-size: 13px; font-weight: 400; opacity: 0.7; letter-spacing: 0.01em; position: relative; }
+    .sample-meta { display: flex; flex-wrap: wrap; gap: 8px; position: relative; }
+    .tag {
+      border: 1px solid rgba(255,255,255,0.24);
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .tag-en { display: block; font-size: 10px; font-weight: 400; opacity: 0.75; margin-top: 2px; }
+
+    .panel { padding: 24px; margin-bottom: 22px; }
+    .controls {
+      display: grid;
+      grid-template-columns: 1.2fr 0.75fr 0.75fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    label { display: block; font-size: 13px; font-weight: 800; color: var(--deep); margin-bottom: 8px; }
+    textarea, select, input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      padding: 15px 16px;
+      font: inherit;
+      color: var(--ink);
+      outline: none;
+      transition: 0.2s ease;
+    }
+
+    textarea { min-height: 124px; resize: vertical; line-height: 1.6; }
+    textarea:focus, select:focus, input:focus { border-color: rgba(165, 0, 52, 0.5); box-shadow: 0 0 0 4px rgba(165,0,52,0.08); }
+
+    .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 18px;
+      font-weight: 850;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .primary { background: var(--lg-red); color: #fff; box-shadow: 0 14px 30px rgba(165, 0, 52, 0.25); }
+    .secondary { background: #f3edf1; color: var(--deep); }
+    button:hover { transform: translateY(-1px); }
+    .hint { color: var(--muted); font-size: 13px; }
+
+    .btn-en { display: block; font-size: 10px; font-weight: 500; opacity: 0.8; margin-top: 3px; letter-spacing: 0.02em; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .chip {
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .chip-en { display: block; font-size: 10px; opacity: 0.75; margin-top: 1px; }
+
+    .output-grid {
+      display: none;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .output-grid.show { display: grid; }
+
+    .empty-state {
+      background: rgba(255,255,255,0.78);
+      border: 1px dashed #d8c3ce;
+      border-radius: 24px;
+      padding: 30px;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .empty-state strong { display: block; color: var(--deep); font-size: 20px; margin-bottom: 8px; }
+
+    .output-card { padding: 22px; min-height: 220px; }
+    .output-card.wide { grid-column: 1 / -1; }
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .card-head h2 { margin: 0; font-size: 18px; color: var(--deep); }
+    .badge { font-size: 11px; font-weight: 800; color: var(--lg-red); background: var(--soft); padding: 6px 9px; border-radius: 999px; white-space: nowrap; }
+
+    .big-slogan {
+      font-size: clamp(25px, 3vw, 38px);
+      font-weight: 900;
+      line-height: 1.16;
+      letter-spacing: -0.04em;
+      color: var(--deep);
+      margin: 4px 0 14px;
+    }
+    .subcopy { color: var(--muted); line-height: 1.75; margin: 0 0 12px; }
+    .list { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+    .list li {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 13px;
+      background: #fff;
+      line-height: 1.55;
+    }
+    .list strong { color: var(--lg-red); }
+
+    .storyboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .frame {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      min-height: 210px;
+    }
+    .visual {
+      height: 92px;
+      background: linear-gradient(135deg, #2b1b27, #A50034);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 32px;
+      font-weight: 900;
+    }
+    .frame-content { padding: 12px; }
+    .frame-content h3 { margin: 0 0 4px; font-size: 14px; color: var(--deep); }
+    .frame-content .frame-en { display: block; font-size: 10.5px; color: var(--muted); margin-bottom: 6px; font-style: italic; }
+    .frame-content p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 13px; }
+
+    .copy-area {
+      width: 100%;
+      min-height: 180px;
+      white-space: pre-wrap;
+      font-family: "Consolas", "Menlo", monospace;
+      font-size: 13px;
+      color: #352631;
+      background: #fff;
+      border: 1px dashed #d8c3ce;
+      border-radius: 18px;
+      padding: 14px;
+      line-height: 1.55;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(20px);
+      background: #17131a;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.2s ease;
+      font-size: 13px;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 920px) {
+      .hero, .controls, .row, .output-grid { grid-template-columns: 1fr; }
+      .storyboard { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .app { width: min(100% - 22px, 1180px); padding-top: 18px; }
+      .hero-card, .panel, .output-card, .sample-box { border-radius: 22px; padding: 20px; }
+      .storyboard { grid-template-columns: 1fr; }
+      .actions button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="hero-card">
+        <div class="eyebrow">全球广告创意生成器 <span>GLOBAL AD CREATIVE GENERATOR</span></div>
+        <h1>碎片想法，全案营销
+          <span class="h1-en">From Fragments to Full Campaign</span>
+        </h1>
+        <p>输入中文、英文或韩语关键词，系统会先判断主题与产品类别，再生成可用于提案的核心创意、广告语、海报文案、宣传片分镜和整合营销打法。<span class="en-note">From fragments to a full campaign: big idea, taglines, storyboard and go-to-market plan.</span></p>
+      </div>
+      <div class="sample-box">
+        <div>
+          <div class="sample-title">输入后自动生成 <span class="en-note light">Auto-generated after input</span></div>
+          <div class="sample-line">从碎片想法，到完整 Campaign。
+            <span class="sample-line-en">From scattered fragments to a complete campaign.</span>
+          </div>
+        </div>
+        <div class="sample-meta">
+          <span class="tag">广告语<span class="tag-en">Tagline</span></span>
+          <span class="tag">TVC Idea</span>
+          <span class="tag">分镜脚本<span class="tag-en">Storyboard</span></span>
+          <span class="tag">推广打法<span class="tag-en">Go-to-market</span></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="controls">
+        <div>
+          <label for="rawIdea">你的碎片想法<span class="en-note">Keywords or rough notes</span></label>
+          <textarea id="rawIdea" placeholder="例：世界杯，LG洗衣机，球衣，草渍，赛后焕新&#10;Example: World Cup, LG washer, jersey, stains, refresh&#10;예: 월드컵, LG 세탁기, 유니폼, 얼룩, 산뜻함">世界杯，LG洗衣机</textarea>
+        </div>
+        <div>
+          <label for="tone">创意语气<span class="en-note">Tone of voice</span></label>
+          <select id="tone">
+            <option value="premium">高端旗舰感 / Premium Flagship</option>
+            <option value="emotional">温情共鸣 / Emotional Resonance</option>
+            <option value="youth">年轻社交感 / Youth Social</option>
+            <option value="bold">热血冲击感 / Bold Impact</option>
+            <option value="minimal">极简高级感 / Minimal Premium</option>
+          </select>
+        </div>
+        <div>
+          <label for="market">目标市场<span class="en-note">Target market</span></label>
+          <select id="market">
+            <option value="china">中国市场 / China Market</option>
+            <option value="global">全球市场 / Global Market</option>
+            <option value="korea">韩国市场 / Korea Market</option>
+            <option value="bilingual">中英双语提案 / CN-EN Proposal</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="product">品牌/产品补充<span class="en-note">Product detail</span></label>
+          <input id="product" placeholder="如：OLED、AI画质、超薄设计 / e.g. OLED, AI picture, slim design" />
+        </div>
+        <div>
+          <label for="audience">目标人群<span class="en-note">Target audience</span></label>
+          <input id="audience" placeholder="如：球迷、家庭用户、高端用户 / e.g. fans, families, premium users" />
+        </div>
+        <div>
+          <label for="channel">投放渠道<span class="en-note">Media channels</span></label>
+          <input id="channel" placeholder="如：抖音、小红书、线下门店、TVC / e.g. Douyin, Xiaohongshu, TVC" />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" onclick="generateIdeas()">生成创意方案<span class="btn-en">Generate Campaign</span></button>
+        <button class="secondary" onclick="loadExample()">套用世界杯示例<span class="btn-en">Load World Cup Example</span></button>
+        <button class="secondary" onclick="copyAll()">复制完整方案<span class="btn-en">Copy Full Proposal</span></button>
+        <span class="hint">支持中文、英文、韩语等输入；输出统一整理为商务中文，可直接改成提案页。<br><span style="font-size:11px;opacity:0.8">Accepts Chinese, English or Korean input. Output is in business Chinese, ready for a proposal deck.</span></span>
+      </div>
+      <div class="chips">
+        <span class="chip" onclick="quick('世界杯，LG洗衣机，球衣，草渍，赛后焕新')">世界杯 + 洗衣机<span class="chip-en">World Cup + Washer</span></span>
+        <span class="chip" onclick="quick('世界杯，LG电视G6，AI画质，客厅主场')">世界杯 + LG G6<span class="chip-en">World Cup + LG G6 TV</span></span>
+        <span class="chip" onclick="quick('여름, 에어컨, 절전, 시원함')">夏季 + 空调<span class="chip-en">Summer + Air Conditioner</span></span>
+        <span class="chip" onclick="quick('新家，冰箱，健康食材，年轻家庭')">新家 + 冰箱<span class="chip-en">New Home + Refrigerator</span></span>
+      </div>
+    </section>
+
+    <section class="output-grid" id="outputGrid">
+      <div class="output-card wide">
+        <div class="card-head">
+          <h2>核心创意<span class="en-inline">Big Idea</span></h2>
+          <span class="badge">MAIN CONCEPT</span>
+        </div>
+        <div class="big-slogan" id="mainSlogan">让世界级瞬间，在 LG G6 上主场开赛。</div>
+        <p class="subcopy" id="mainCopy">把世界杯的热血、朋友聚会的情绪和 LG G6 的旗舰画质连接起来，把电视从"观看设备"升级为"客厅主场"。</p>
+      </div>
+
+      <div class="output-card">
+        <div class="card-head">
+          <h2>广告语方向<span class="en-inline">Taglines</span></h2>
+          <span class="badge">TAGLINES</span>
+        </div>
+        <ul class="list" id="taglines"></ul>
+      </div>
+
+      <div class="output-card">
+        <div class="card-head">
+          <h2>宣传语 / 海报文案<span class="en-inline">Key Copy</span></h2>
+          <span class="badge">KEY COPY</span>
+        </div>
+        <ul class="list" id="posterCopy"></ul>
+      </div>
+
+      <div class="output-card wide">
+        <div class="card-head">
+          <h2>宣传片拍摄脚本<span class="en-inline">TVC Storyboard</span></h2>
+          <span class="badge">TVC STORYBOARD</span>
+        </div>
+        <div class="storyboard" id="storyboard"></div>
+      </div>
+
+      <div class="output-card">
+        <div class="card-head">
+          <h2>推广打法<span class="en-inline">Go-to-market</span></h2>
+          <span class="badge">GO-TO-MARKET</span>
+        </div>
+        <ul class="list" id="promotion"></ul>
+      </div>
+
+      <div class="output-card">
+        <div class="card-head">
+          <h2>社媒短视频点子<span class="en-inline">Social Ideas</span></h2>
+          <span class="badge">SOCIAL IDEAS</span>
+        </div>
+        <ul class="list" id="social"></ul>
+      </div>
+
+      <div class="output-card wide">
+        <div class="card-head">
+          <h2>可复制完整方案<span class="en-inline">Export-ready Proposal</span></h2>
+          <span class="badge">EXPORT</span>
+        </div>
+        <div class="copy-area" id="exportText"></div>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast">已复制 · Copied</div>
+
+  <script>
+    const toneMap = {
+      premium: {
+        label: "高端旗舰感 / Premium Flagship",
+        words: ["旗舰画质", "世界级沉浸", "高端客厅", "每一帧都值得被认真看见"],
+        verb: "点亮"
+      },
+      emotional: {
+        label: "温情共鸣 / Emotional Resonance",
+        words: ["团聚", "陪伴", "共同欢呼", "把重要时刻留在家里"],
+        verb: "连接"
+      },
+      youth: {
+        label: "年轻社交感 / Youth Social",
+        words: ["开趴", "主场氛围", "朋友局", "把客厅变成热搜现场"],
+        verb: "引爆"
+      },
+      bold: {
+        label: "热血冲击感 / Bold Impact",
+        words: ["开赛", "燃点", "胜利瞬间", "大屏冲击"],
+        verb: "释放"
+      },
+      minimal: {
+        label: "极简高级感 / Minimal Premium",
+        words: ["少一点距离", "多一分真实", "纯粹画质", "安静但震撼"],
+        verb: "呈现"
+      }
+    };
+
+    const marketMap = {
+      china: "中国市场",
+      global: "全球市场",
+      korea: "韩国市场",
+      bilingual: "中英双语提案"
+    };
+
+    // storyboard frame title → English translation
+    const frameTitleEN = {
+      "情绪开场": "Emotional Hook",
+      "产品转场": "Product Transition",
+      "生活高光": "Life Highlight",
+      "品牌收束": "Brand Close",
+      "赛场热爱": "Match Passion",
+      "问题放大": "Problem Close-up",
+      "产品巧妙转场": "Clever Product Cut",
+      "焕新收束": "Refresh & Close",
+      "开场钩子": "Opening Hook",
+      "产品登场": "Product Reveal",
+      "情绪爆点": "Emotional Peak",
+    };
+
+    function normalizeIdea(raw) {
+      return raw
+        .replace(/[，、\n\t|/]+/g, ",")
+        .split(",")
+        .map(item => item.trim())
+        .filter(Boolean);
+    }
+
+    function detectTheme(tokens) {
+      const joined = tokens.join(" ").toLowerCase();
+      if (/世界杯|world cup|월드컵|football|soccer|축구/.test(joined)) return "世界杯";
+      if (/new year|春节|새해|新年/.test(joined)) return "新年";
+      if (/summer|夏|여름|空调|air conditioner/.test(joined)) return "夏季";
+      if (/home|新家|거실|客厅|living/.test(joined)) return "家庭生活";
+      return tokens[0] || "品牌创意";
+    }
+
+    function detectProduct(tokens, manualProduct) {
+      if (manualProduct.trim()) return manualProduct.trim();
+      const productToken = tokens.find(token => /lg|g6|oled|电视|tv|冰箱|洗衣机|washer|washing|laundry|세탁기|空调|air conditioner|에어컨|냉장고/i.test(token));
+      return productToken || tokens[1] || "产品";
+    }
+
+    function detectProductType(tokens, product) {
+      const joined = `${tokens.join(" ")} ${product}`.toLowerCase();
+      if (/洗衣机|washer|washing|laundry|세탁기/.test(joined)) return "washer";
+      if (/电视|tv|oled|g6|screen|display|티비|텔레비전/.test(joined)) return "tv";
+      if (/冰箱|refrigerator|fridge|냉장고/.test(joined)) return "fridge";
+      if (/空调|air conditioner|ac|에어컨/.test(joined)) return "ac";
+      return "generic";
+    }
+
+    function buildCreativeBridge(theme, product, productType, tone) {
+      const defaultBridge = {
+        role: `${product}成为${theme}情绪的承接点`,
+        metaphor: "把抽象情绪变成可感知的产品体验",
+        mainCopy: `以「${theme}」作为情绪入口，用「${product}」承接${tone.words[0]}与${tone.words[1]}，把零散关键词整理成一个能拍、能投放、能延展的传播主题。`,
+        taglines: [
+          `让${theme}的高光，因 ${product} 被记住。`,
+          `${product}，把${theme}变成真实体验。`,
+          `不只参与${theme}，也把生活过成主场。`
+        ],
+        poster: [`${theme}来了，生活就是主场。`, `${tone.words[2]}，由 ${product} ${tone.verb}。`, `把热爱，变成看得见的生活细节。`],
+        storyboard: [
+          { icon: "01", title: "情绪开场", body: `用户进入${theme}场景，情绪被快速点燃。` },
+          { icon: "02", title: "产品转场", body: `${product}用一个清晰的功能点承接场景需求。` },
+          { icon: "03", title: "生活高光", body: `产品体验和${theme}情绪形成反差记忆点。` },
+          { icon: "04", title: "品牌收束", body: `以广告语和购买/体验入口完成转化。` }
+        ],
+        promotion: [
+          `围绕「生活主场」发起UGC征集，让用户晒出自己的${theme}生活场景。`,
+          `在${product}真实使用场景中植入${theme}元素，避免只做关键词拼贴。`,
+          `联合KOL做"主题场景 + 产品解决方案"的短视频内容。`,
+          `线下设置沉浸体验区，让用户现场感受产品如何解决具体需求。`
+        ],
+        social: [
+          `用前后对比制造记忆点：没有 ${product} 的场景 vs 使用后的场景。`,
+          `拍摄15秒"一个关键词变成一个广告"的快速创意短片。`,
+          `发起用户共创，让消费者提交自己的关键词组合。`,
+          `把产品功能拟人化，做成可持续更新的系列内容。`
+        ]
+      };
+
+      if (theme === "世界杯" && productType === "washer") {
+        return {
+          role: `${product}不是看球设备，而是"赛后战袍护理官"`,
+          metaphor: "把球衣、草渍、汗味、欢呼后的狼狈，转化为洗衣机的洁净力与焕新感",
+          mainCopy: `不要把${product}硬放进"看球主场"，而是让它负责世界杯真正发生后的生活场景：球衣上的草渍、汗味、啤酒渍和通宵观赛后的衣物护理。创意重点是"每一场热爱，都值得被洗净再出发"。`,
+          taglines: [
+            `每一件战袍，都配得上下一场胜利。`,
+            `进球后的汗水和草渍，交给 ${product}。`,
+            `把世界杯穿在身上，也把热爱洗得焕然一新。`,
+            `90分钟拼尽全力，洗护一键恢复主场状态。`,
+            `欢呼可以尽兴，赛后依然清爽。`
+          ],
+          poster: [
+            `海报标题：战袍上场，洁净也要赢。`,
+            `副标题：从草渍、汗味到啤酒渍，${product}守住每一次热爱。`,
+            `短句：真正的球迷，不怕弄脏战袍。`,
+            `行动号召：用 ${product}，让下一场继续清爽开赛。`
+          ],
+          storyboard: [
+            { icon: "01", title: "赛场热爱", body: `球迷穿着球衣在客厅/球场外欢呼，进球瞬间饮料洒出、球衣沾上汗水和草渍。` },
+            { icon: "02", title: "问题放大", body: `镜头特写：白色球衣上的泥点、袖口汗渍、孩子踢球后的草渍，形成真实生活痛点。` },
+            { icon: "03", title: "产品巧妙转场", body: `足球旋转切到洗衣机滚筒旋转，球衣进入 ${product}，用洁净力、护衣或AI洗涤功能完成"战袍恢复"。` },
+            { icon: "04", title: "焕新收束", body: `干净球衣再次穿上，下一场比赛开始。字幕：每一件战袍，都配得上下一场胜利。` }
+          ],
+          promotion: [
+            `预热期：发起#我的世界杯战袍#征集，邀请用户晒球衣故事和最难洗的观赛污渍。`,
+            `爆发期：投放"足球旋转变滚筒"的15秒短片，视觉上把世界杯与洗衣机自然连接。`,
+            `转化期：门店设置"战袍焕新挑战"，现场展示草渍/汗渍/饮料渍洗护效果。`,
+            `延展期：联合足球KOL、亲子运动KOL做"踢完一场球，球衣如何恢复"的真实测评。`
+          ],
+          social: [
+            `短视频1：球衣被弄脏的5个世界杯瞬间，最后用 ${product} 一键焕新。`,
+            `短视频2：足球旋转无缝转场到洗衣机滚筒，标题"热爱转起来，洁净跟上来"。`,
+            `短视频3：爸爸和孩子踢球回家，妈妈不皱眉，因为战袍有 ${product}。`,
+            `互动玩法：用户上传自己的"战袍污渍"，品牌生成专属洁净宣言。`
+          ]
+        };
+      }
+
+      if (theme === "世界杯" && productType === "tv") {
+        return {
+          role: `${product}是把世界杯带进客厅的"主场屏幕"`,
+          metaphor: "用大屏、画质、沉浸感放大进球瞬间",
+          mainCopy: `电视适合承接世界杯的观看场景：把进球瞬间、朋友聚会和客厅氛围连接起来，让${product}从设备变成"家庭主场"。`,
+          taglines: [`让世界级瞬间，在 ${product} 上主场开赛。`, `每一次欢呼，都在 ${product} 里更接近现场。`, `${product}，把世界杯的高光放大到眼前。`, `今晚不只是看比赛，是把朋友叫回主场。`, `看见世界，也看见画质的答案。`],
+          poster: [`海报标题：世界杯来了，客厅就是主场。`, `副标题：世界级沉浸，由 ${product} 点亮。`, `短句：一块屏幕，装下全世界的欢呼。`, `行动号召：现在体验 ${product}，把高光时刻带回家。`],
+          storyboard: [
+            { icon: "01", title: "开场钩子", body: `朋友陆续来到客厅，比赛即将开始，灯光渐暗。` },
+            { icon: "02", title: "产品登场", body: `${product}亮起，画面细节和色彩把空间变成主场。` },
+            { icon: "03", title: "情绪爆点", body: `关键进球出现，朋友一起欢呼，镜头捕捉表情和大屏画面。` },
+            { icon: "04", title: "品牌收束", body: `回到产品与广告语，露出购买/体验入口。` }
+          ],
+          promotion: defaultBridge.promotion,
+          social: defaultBridge.social
+        };
+      }
+
+      return defaultBridge;
+    }
+
+    function renderList(id, items) {
+      document.getElementById(id).innerHTML = items.map(item => `<li>${item}</li>`).join("");
+    }
+
+    function generateIdeas() {
+      const raw = document.getElementById("rawIdea").value.trim();
+      const tokens = normalizeIdea(raw || "世界杯，LG电视G6");
+      const tone = toneMap[document.getElementById("tone").value];
+      const market = marketMap[document.getElementById("market").value];
+      const product = detectProduct(tokens, document.getElementById("product").value);
+      const audience = document.getElementById("audience").value.trim() || inferAudience(tokens);
+      const channel = document.getElementById("channel").value.trim() || "TVC / 抖音 / 小红书 / 门店大屏";
+      const theme = detectTheme(tokens);
+      const keywords = tokens.join(" × ");
+
+      const productType = detectProductType(tokens, product);
+      const bridge = buildCreativeBridge(theme, product, productType, tone);
+      const mainSlogan = bridge.taglines[0];
+      const mainCopy = `${bridge.mainCopy} 面向${audience}，建议优先投放于${channel}。`;
+      const taglines = bridge.taglines.map((item, index) => `<strong>${index === 0 ? "主广告语" : "延展方向"}：</strong>${item}`);
+      const posterCopy = bridge.poster.map(item => `<strong>${item.split("：")[0]}：</strong>${item.includes("：") ? item.split("：").slice(1).join("：") : item}`);
+      const storyboard = bridge.storyboard;
+      const promotion = bridge.promotion.map(item => item.includes("：") ? `<strong>${item.split("：")[0]}：</strong>${item.split("：").slice(1).join("：")}` : item);
+      const social = bridge.social.map(item => item.includes("：") ? `<strong>${item.split("：")[0]}：</strong>${item.split("：").slice(1).join("：")}` : item);
+
+      document.getElementById("mainSlogan").textContent = mainSlogan;
+      document.getElementById("mainCopy").textContent = mainCopy;
+
+      renderList("taglines", taglines);
+      renderList("posterCopy", posterCopy);
+      renderStoryboard(storyboard);
+      renderList("promotion", promotion);
+      renderList("social", social);
+
+      // 显示输出区域
+      document.getElementById("outputGrid").classList.add("show");
+
+      const exportText = [
+        `【输入关键词】${keywords}`,
+        `【目标市场】${market}`,
+        `【创意语气】${tone.label}`,
+        `【目标人群】${audience}`,
+        ``,
+        `【策略判断】${bridge.role}`,
+        `【创意桥梁】${bridge.metaphor}`,
+        `【核心创意】${mainSlogan}`,
+        mainCopy,
+        ``,
+        `【广告语】`,
+        ...stripHtml(taglines),
+        ``,
+        `【宣传片脚本】`,
+        ...storyboard.map((item, index) => `${index + 1}. ${item.title}：${item.body}`),
+        ``,
+        `【推广打法】`,
+        ...stripHtml(promotion),
+        ``,
+        `【社媒短视频点子】`,
+        ...stripHtml(social)
+      ].join("\n");
+      document.getElementById("exportText").textContent = exportText;
+    }
+
+    function buildMainSlogan(theme, product, tone) {
+      if (theme === "世界杯") return `让世界级瞬间，在 ${product} 上主场开赛。`;
+      if (theme === "新年") return `用 ${product}，开启更好的新一年。`;
+      if (theme === "夏季") return `这个夏天，让清凉被 ${product} 放大。`;
+      if (theme === "家庭生活") return `${product}，把家的每一刻变成高光。`;
+      return `${product}，把${theme}变成看得见的灵感。`;
+    }
+
+    function inferAudience(tokens) {
+      const joined = tokens.join(" ").toLowerCase();
+      if (/世界杯|world cup|월드컵|football|soccer/.test(joined)) return "球迷、家庭用户、朋友聚会社群";
+      if (/new year|春节|새해|新年/.test(joined)) return "家庭用户、送礼人群、新生活人群";
+      if (/summer|夏|여름|空调/.test(joined)) return "年轻家庭、租房人群、品质生活用户";
+      return "潜在消费者、品牌关注者、高意向购买人群";
+    }
+
+    function renderStoryboard(items) {
+      document.getElementById("storyboard").innerHTML = items.map(item => {
+        const enTitle = frameTitleEN[item.title] || "";
+        return `
+        <div class="frame">
+          <div class="visual">${item.icon}</div>
+          <div class="frame-content">
+            <h3>${item.title}${enTitle ? ` <span style="font-size:10px;color:var(--muted);font-weight:400;">${enTitle}</span>` : ""}</h3>
+            <p>${item.body}</p>
+          </div>
+        </div>
+      `;
+      }).join("");
+    }
+
+    function stripHtml(items) {
+      const div = document.createElement("div");
+      return items.map(item => {
+        div.innerHTML = item;
+        return div.textContent || div.innerText || "";
+      });
+    }
+
+    function loadExample() {
+      document.getElementById("rawIdea").value = "世界杯，LG洗衣机，球衣，草渍，汗味，赛后焕新";
+      document.getElementById("product").value = "LG洗衣机";
+      document.getElementById("audience").value = "球迷、亲子家庭、运动爱好者";
+      document.getElementById("channel").value = "TVC、抖音、小红书、线下门店、京东/天猫详情页";
+      document.getElementById("tone").value = "bold";
+      generateIdeas();
+    }
+
+    function quick(value) {
+      document.getElementById("rawIdea").value = value;
+      generateIdeas();
+    }
+
+    async function copyAll() {
+      const text = document.getElementById("exportText").textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("完整方案已复制 · Copied!");
+      } catch (error) {
+        showToast("复制失败，请手动选择文本 · Please select manually");
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    generateIdeas();
+  </script>
+</body>
+</html>
