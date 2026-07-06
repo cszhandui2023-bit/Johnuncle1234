@@ -1,0 +1,1732 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>专业市场分析报告生成器</title>
+  <style>
+    :root {
+      --lg-red: #a50034;
+      --lg-red-dark: #740024;
+      --ink: #1c1c1f;
+      --muted: #6f6f78;
+      --line: #e8e1dc;
+      --paper: #fffaf6;
+      --card: #ffffff;
+      --soft: #f7efe9;
+      --blue: #205a8f;
+      --green: #197a50;
+      --amber: #b56a00;
+      --shadow: 0 18px 50px rgba(53, 32, 22, .12);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(165, 0, 52, .12), transparent 28rem),
+        linear-gradient(135deg, #fbf7f2 0%, #f2ece5 100%);
+      line-height: 1.55;
+    }
+
+    .app {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+    }
+
+    .panel,
+    .report {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(232, 225, 220, .9);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+      padding: 24px;
+    }
+
+    .brand-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f5e8e8;
+      color: var(--lg-red);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .lang-switch {
+      display: inline-grid;
+      grid-template-columns: repeat(3, 1fr);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.22);
+      background: #111426;
+      border-radius: 8px;
+      min-width: 158px;
+    }
+    .lang-switch button {
+      border-radius: 0;
+      padding: 10px 13px;
+      background: transparent;
+      color: #c9ccdc;
+      font-size: 14px;
+      border-right: 1px solid rgba(255,255,255,.18);
+    }
+    .lang-switch button:last-child { border-right: 0; }
+    .lang-switch button.active { background: #b0003b; color: #fff; }
+
+    .powered-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: max-content;
+      padding: 6px 13px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #b0003b, #8b002e);
+      color: white;
+      font-size: 12px;
+      font-weight: 1000;
+      box-shadow: 0 8px 18px rgba(165, 0, 52, .24);
+      margin: 2px 0 16px;
+    }
+
+    .api-card {
+      position: relative;
+      overflow: hidden;
+      margin: 16px 0 18px;
+      padding: 16px;
+      border-radius: 18px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 86% 86%, rgba(255,255,255,.22) 0 0, rgba(255,255,255,.2) 72px, transparent 73px),
+        linear-gradient(135deg, #6c0029 0%, #a0003a 52%, #ca4678 100%);
+      box-shadow: 0 16px 34px rgba(165, 0, 52, .24);
+    }
+    .api-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -24px -50px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.16);
+      pointer-events: none;
+    }
+    .api-head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-weight: 1000;
+      margin-bottom: 8px;
+    }
+    .api-head small { opacity: .78; font-weight: 800; margin-left: 4px; }
+    .api-desc { position: relative; z-index: 1; font-size: 12px; line-height: 1.42; opacity: .96; margin-bottom: 10px; }
+    .api-mini { color: rgba(255,255,255,.72); font-size: 12px; margin-top: -6px; margin-bottom: 10px; }
+    .api-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .api-grid input {
+      border-color: rgba(255,255,255,.18);
+      background: rgba(49,0,25,.48);
+      color: white;
+      padding: 9px 12px;
+      border-radius: 11px;
+      font-size: 13px;
+    }
+    .api-grid input::placeholder { color: rgba(255,255,255,.62); }
+    .api-grid .wide { grid-column: 1 / -1; }
+    .api-actions { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
+    .api-actions button {
+      padding: 9px 12px;
+      border: 1px solid rgba(255,255,255,.28);
+      background: rgba(255,255,255,.12);
+      color: white;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+    .api-actions button:last-child { background: rgba(255,255,255,.62); color: #6c0029; }
+    .api-status { position: relative; z-index: 1; margin-top: 9px; font-size: 12px; display: flex; align-items: center; gap: 7px; }
+    .api-dot { width: 9px; height: 9px; border-radius: 50%; background: #22d66b; display: inline-block; }
+    .api-card.collapsed .api-body { display: none; }
+    .api-toggle { cursor: pointer; user-select: none; }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: 28px; line-height: 1.15; margin-bottom: 10px; letter-spacing: -.6px; }
+    h2 { font-size: 22px; margin-bottom: 14px; }
+    h3 { font-size: 17px; margin-bottom: 10px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      color: #3c3230;
+      margin: 14px 0 6px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #ddd2cc;
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px 13px;
+      font: inherit;
+      color: var(--ink);
+      outline: none;
+      transition: .2s;
+    }
+
+    textarea { min-height: 88px; resize: vertical; }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--lg-red);
+      box-shadow: 0 0 0 4px rgba(165, 0, 52, .09);
+    }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+    .analyze-btn {
+      width: 100%;
+      margin: 12px 0 4px;
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-size: 15px;
+      box-shadow: 0 12px 24px rgba(165, 0, 52, .16);
+    }
+    button, .link-btn {
+      border: 0;
+      border-radius: 15px;
+      padding: 12px 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: .18s ease;
+      text-align: center;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+    }
+
+    .primary { background: var(--lg-red); color: #fff; }
+    .secondary { background: #1f1f24; color: #fff; }
+    .ghost { background: #f3e8e3; color: #4b3732; }
+    button:hover, .link-btn:hover { transform: translateY(-1px); filter: brightness(.98); }
+
+    .report { padding: 0; overflow: hidden; }
+    .report-banner {
+      position: relative;
+      min-height: 150px;
+      padding: 26px 38px;
+      color: white;
+      background:
+        linear-gradient(120deg, rgba(15,18,39,.96), rgba(86,0,36,.94) 48%, rgba(176,0,59,.88)),
+        radial-gradient(circle at 78% 18%, rgba(255,255,255,.24), transparent 180px);
+      overflow: hidden;
+    }
+    .report-banner::before {
+      content: "";
+      position: absolute;
+      right: 32px;
+      top: 18px;
+      width: 270px;
+      height: 110px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.04));
+      transform: rotate(-6deg);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .report-banner::after {
+      content: "MARKET\A INTELLIGENCE";
+      white-space: pre;
+      position: absolute;
+      right: 54px;
+      bottom: 18px;
+      color: rgba(255,255,255,.14);
+      font-size: 42px;
+      line-height: .86;
+      font-weight: 1000;
+      letter-spacing: -.04em;
+      text-align: right;
+    }
+    .banner-inner { position: relative; z-index: 1; max-width: 720px; }
+    .banner-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.2);
+      font-size: 12px;
+      font-weight: 1000;
+      margin-bottom: 12px;
+    }
+    .banner-title { font-size: 27px; line-height: 1.15; font-weight: 1000; margin-bottom: 8px; }
+    .banner-sub { opacity: .84; font-size: 14px; margin-bottom: 0; }
+
+    .content { padding: 28px 38px 42px; }
+
+    .section {
+      margin-top: 22px;
+      padding: 22px;
+      border: 1px solid #eee2dc;
+      border-radius: 22px;
+      background: #fff;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border-bottom: 1px solid #f0e5df;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .section-title h2 { margin: 0; }
+    .section-title span { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+
+    table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 14px; font-size: 14px; }
+    th { background: #f5eee9; color: #4a3430; text-align: left; }
+    th, td { padding: 12px 13px; border-bottom: 1px solid #eee5df; vertical-align: top; }
+    tr:last-child td { border-bottom: 0; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .swot { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .swot-card { border-radius: 18px; padding: 16px; border: 1px solid #eee1da; }
+    .swot-card strong { display: block; margin-bottom: 8px; font-size: 16px; }
+    .s { background: #fff5f7; } .w { background: #fff9ed; } .o { background: #effaf5; } .t { background: #f2f6ff; }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 6px 0; }
+
+    .bars { display: grid; gap: 13px; }
+    .bar-row { display: grid; grid-template-columns: 130px 1fr 45px; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; }
+    .bar-track { height: 12px; border-radius: 999px; background: #f0e7e1; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--lg-red), #ef7b55); width: 50%; }
+
+    .visual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0; }
+    .metric {
+      padding: 14px;
+      border-radius: 16px;
+      background: #fff8f5;
+      border: 1px solid #efe0d9;
+    }
+    .metric b { display: block; font-size: 24px; line-height: 1; color: var(--lg-red); margin-bottom: 6px; }
+    .metric span { color: #665652; font-size: 12px; font-weight: 800; }
+    .product-visual {
+      min-height: 220px;
+      border-radius: 18px;
+      border: 1px solid #eee1da;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(165,0,52,.16), transparent 120px),
+        linear-gradient(145deg, #fff8f5 0%, #f5ebe4 100%);
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+    .product-device {
+      width: 116px;
+      height: 166px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, #1c1c22, #5a3f48 42%, #0f1015);
+      box-shadow: 0 24px 40px rgba(38, 26, 24, .22);
+      position: relative;
+      border: 1px solid rgba(255,255,255,.4);
+    }
+    .product-device::before {
+      content: "";
+      position: absolute;
+      inset: 13px 16px;
+      border-radius: 17px;
+      background: linear-gradient(145deg, rgba(255,255,255,.22), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .product-device::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 50%;
+      bottom: -34px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 900;
+      color: #6a4d47;
+    }
+    .bubble-chart {
+      min-height: 220px;
+      border-radius: 18px;
+      border: 1px solid #eee1da;
+      background: #fffaf7;
+      position: relative;
+      overflow: hidden;
+    }
+    .bubble {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: var(--x);
+      top: var(--y);
+      border-radius: 999px;
+      background: rgba(165,0,52,.12);
+      border: 1px solid rgba(165,0,52,.24);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      color: #5b3035;
+      font-size: 12px;
+      font-weight: 1000;
+    }
+    .score-bars { display: grid; gap: 10px; }
+    .score-row { display: grid; grid-template-columns: 115px 1fr 42px; gap: 10px; align-items: center; font-size: 13px; font-weight: 900; }
+    .mini-chart {
+      height: 10px;
+      border-radius: 999px;
+      background: #efe4df;
+      overflow: hidden;
+    }
+    .mini-chart span { display: block; height: 100%; width: var(--score); background: linear-gradient(90deg, #a50034, #e46b51); border-radius: inherit; }
+
+    .action-list { counter-reset: action; display: grid; gap: 12px; }
+    .action {
+      counter-increment: action;
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 14px;
+      border: 1px solid #eee2dc;
+      border-radius: 17px;
+      background: #fffaf7;
+    }
+    .action::before {
+      content: counter(action);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--lg-red);
+      color: white;
+      font-weight: 1000;
+    }
+    .action b { display: block; margin-bottom: 3px; }
+
+    .source-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 14px;
+      border-top: 1px dashed #e5d7d0;
+      padding-top: 12px;
+    }
+
+    .advanced-toggle {
+      margin: 14px 0 0;
+      padding: 10px 14px;
+      background: #f5ede8;
+      border-radius: 13px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      color: #5a3e37;
+      display: flex;
+      justify-content: space-between;
+      user-select: none;
+    }
+    .advanced-toggle:hover { background: #eee0d8; }
+
+    #advancedSection {
+      padding: 12px 0 0;
+      border-top: 1px dashed #ded3cc;
+      margin-top: 10px;
+    }
+
+    .analyzing-spin {
+      display: inline-block;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .copy-toast {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      background: #1f1f24;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 14px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: .2s;
+      pointer-events: none;
+      font-weight: 800;
+    }
+    .copy-toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1120px) {
+      .app { grid-template-columns: 1fr; }
+      .panel { position: static; max-height: none; }
+    }
+
+    @media (max-width: 720px) {
+      .app { padding: 12px; }
+      .content, .report-banner { padding-left: 18px; padding-right: 18px; }
+      .two-col, .swot, .row, .visual-grid, .metric-grid { grid-template-columns: 1fr; display: grid; }
+      .banner-title { font-size: 23px; }
+      .report-banner::before, .report-banner::after { display: none; }
+      .lang-switch { width: 100%; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .app { display: block; padding: 0; max-width: none; }
+      .panel { display: none; }
+      .report { box-shadow: none; border: 0; border-radius: 0; }
+      .section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="panel">
+      <div class="brand-line">
+        <span class="badge" data-i18n="badge">市场分析报告 Skill</span>
+        <div class="lang-switch" aria-label="Language switch">
+          <button type="button" onclick="setLang('ko')">KO</button>
+          <button type="button" onclick="setLang('en')">EN</button>
+          <button type="button" class="active" onclick="setLang('cn')">CN</button>
+        </div>
+      </div>
+      <div class="powered-pill" data-i18n="powered">Powered by BI Team</div>
+      <h1 data-i18n="appTitle">一键生成专业市场分析报告</h1>
+      <p class="subtitle" data-i18n="appSubtitle">输入产品名称后，品牌、品类、卖点、竞品等信息将自动识别，报告即时生成。如需精细调整，可展开"高级设置"手动覆盖。</p>
+
+      <label><span data-i18n="productName">产品名称</span> <span id="analyzeHint" style="color:var(--lg-red);font-size:12px;font-weight:800;"></span></label>
+      <textarea id="productName" placeholder="例：苹果 iPhone 17 Pro、LG 冰箱 Objet、小米 SU7 Ultra …">LG NanoCell AI NANO80 4K 智能电视 2025</textarea>
+
+      <div id="autoPreview" style="margin:10px 0;padding:12px 14px;background:#f9f3f0;border:1px dashed #e0c9c0;border-radius:14px;font-size:13px;color:#5a3e37;display:none;">
+        <b data-i18n="autoResult">自动识别结果：</b><span id="autoPreviewText"></span>
+      </div>
+
+      <button class="primary analyze-btn" type="button" id="analyzeBtn" onclick="runAnalysis()" data-i18n="analyze">分析产品</button>
+
+      <div class="api-card" id="apiCard">
+        <div class="api-head">
+          <div><span data-i18n="apiTitle">AI API 配置</span> <small data-i18n="optional">可选</small></div>
+          <div class="api-toggle" onclick="toggleApiCard()">▲</div>
+        </div>
+        <div class="api-body">
+          <p class="api-desc" data-i18n="apiDesc">配置 API 后，可扩展 AI 创意生成、文章重写和更深度的页面诊断。支持 OpenAI / DeepSeek / 通义千问等兼容接口。</p>
+          <p class="api-mini" data-i18n="apiMini">支持 OpenAI / DeepSeek / 通义千问等兼容接口。</p>
+          <div class="api-grid">
+            <input id="apiBase" value="https://api.llm-token.cn/v1" placeholder="API Base URL" />
+            <input id="apiKey" value="sk-demo-hidden-key" type="password" placeholder="API Key" />
+            <input id="apiModel" class="wide" value="gpt-5.5" placeholder="Model" />
+          </div>
+          <div class="api-actions">
+            <button type="button" onclick="editApiConfig()" data-i18n="edit">修改</button>
+            <button type="button" onclick="saveApiConfig()" data-i18n="save">保存</button>
+          </div>
+          <div class="api-status"><span class="api-dot"></span><span id="apiStatus">已配置</span></div>
+        </div>
+      </div>
+
+      <label><span data-i18n="researchLabel">粘贴联网检索资料</span> <span data-i18n="researchOptional" style="font-size:11px;font-weight:700;color:#b0a099;">可选，让报告更精准</span></label>
+      <textarea id="research" placeholder="把网页、新闻、行业报告中的关键信息粘贴到这里，生成结果会自动吸收这些信息。"></textarea>
+
+      <div class="advanced-toggle" onclick="toggleAdvanced()">
+        <span data-i18n="advanced">高级设置（手动覆盖）</span>
+        <span id="advArrow">▼</span>
+      </div>
+      <div id="advancedSection" style="display:none;">
+        <div class="row">
+          <div>
+            <label data-i18n="brand">品牌</label>
+            <input id="brand" value="LG" />
+          </div>
+          <div>
+            <label data-i18n="category">行业/品类</label>
+            <input id="category" value="AI电视 / 智能电视" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label data-i18n="price">当前售价</label>
+            <input id="price" value="¥3,599" />
+          </div>
+          <div>
+            <label data-i18n="market">目标市场</label>
+            <input id="market" value="中国市场" />
+          </div>
+        </div>
+        <label data-i18n="features">核心卖点（每行一个）</label>
+        <textarea id="features">α7 AI 音/画芯片 Gen8
+NanoCell AI 纯净色彩
+webOS 支持 5 年 4 次升级
+VRR 可变刷新率
+AI 动感遥控器</textarea>
+        <label data-i18n="competitors">竞品/对标品牌</label>
+        <input id="competitors" value="海信、TCL、小米、索尼、三星" />
+        <label data-i18n="purpose">报告用途</label>
+        <select id="purpose">
+          <option value="老板汇报 / 新品立项 / 市场进入判断">老板汇报 / 新品立项 / 市场进入判断</option>
+          <option value="销售培训 / 门店话术 / 渠道策略">销售培训 / 门店话术 / 渠道策略</option>
+          <option value="竞品分析 / 产品定位 / 营销策略">竞品分析 / 产品定位 / 营销策略</option>
+        </select>
+      </div>
+
+      <div class="btns">
+        <button class="secondary" onclick="copyReport()" data-i18n="copy">复制正文</button>
+        <button class="ghost" onclick="window.print()" data-i18n="print">打印/PDF</button>
+        <button class="ghost" onclick="resetNano80()" data-i18n="reset">恢复示例</button>
+      </div>
+    </aside>
+
+    <section class="report" id="reportRoot">
+      <div class="report-banner">
+        <div class="banner-inner">
+          <div class="banner-tag" data-i18n="bannerTag">Powered by BI Team · AI Market Report Generator</div>
+          <div class="banner-title" id="bannerTitle">从产品信息到老板级市场分析报告</div>
+          <p class="banner-sub" id="bannerSub">支持任意产品快速生成趋势洞察、竞品定位、SWOT、用户画像与战略行动计划。</p>
+        </div>
+      </div>
+      <div class="content">
+        <section class="section">
+          <div class="section-title"><h2 data-i18n="sec1">一、执行摘要</h2><span data-i18n="sec1Sub">Executive Summary</span></div>
+          <p id="summary"></p>
+          <div class="metric-grid" id="metricGrid"></div>
+          <div class="visual-grid">
+            <div class="product-visual" id="productVisual"></div>
+            <div class="bubble-chart" id="positionMap"></div>
+          </div>
+          <table>
+            <tbody id="overviewTable"></tbody>
+          </table>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h2 data-i18n="sec2">二、行业趋势洞察</h2><span data-i18n="sec2Sub">Market Trend</span></div>
+          <div class="two-col">
+            <div>
+              <h3 data-i18n="trendTitle">关键趋势判断</h3>
+              <ul id="trendList"></ul>
+            </div>
+            <div>
+              <h3 data-i18n="driverTitle">增长驱动因素</h3>
+              <div class="bars" id="driverBars"></div>
+            </div>
+          </div>
+          <p class="source-note" id="researchNote"></p>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h2 data-i18n="sec3">三、产品能力矩阵</h2><span data-i18n="sec3Sub">Product Matrix</span></div>
+          <table>
+            <thead><tr><th data-i18n="featureTh1">核心能力</th><th data-i18n="featureTh2">用户价值</th><th data-i18n="featureTh3">商业转化含义</th></tr></thead>
+            <tbody id="featureTable"></tbody>
+          </table>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h2 data-i18n="sec4">四、竞品与定位分析</h2><span data-i18n="sec4Sub">Competition</span></div>
+          <table>
+            <thead><tr><th data-i18n="compTh1">竞争阵营</th><th data-i18n="compTh2">代表品牌</th><th data-i18n="compTh3">主要优势</th><th data-i18n="compTh4">本产品突破口</th></tr></thead>
+            <tbody id="competitionTable"></tbody>
+          </table>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h2 data-i18n="sec5">五、SWOT 分析</h2><span data-i18n="sec5Sub">Strategic Diagnosis</span></div>
+          <div class="swot" id="swotGrid"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h2 data-i18n="sec6">六、用户画像与转化诊断</h2><span data-i18n="sec6Sub">User Insight</span></div>
+          <div class="two-col">
+            <table>
+              <thead><tr><th data-i18n="personaTh1">用户类型</th><th data-i18n="personaTh2">核心诉求</th><th data-i18n="personaTh3">推荐话术</th></tr></thead>
+              <tbody id="personaTable"></tbody>
+            </table>
+            <div>
+              <h3 data-i18n="funnelTitle">转化漏斗重点</h3>
+              <div class="score-bars" id="funnelChart" style="margin-bottom:14px;"></div>
+              <ul id="funnelList"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h2 data-i18n="sec7">七、战略建议与行动计划</h2><span data-i18n="sec7Sub">Action Plan</span></div>
+          <div class="action-list" id="actions"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-title"><h2 data-i18n="sec8">八、数据来源与免责声明</h2><span data-i18n="sec8Sub">Sources</span></div>
+          <p id="sourceText"></p>
+          <p class="source-note" data-i18n="disclaimer">免责声明：本报告由工具基于用户输入、公开检索资料和通用市场分析框架生成，仅供内部讨论和商业决策参考；正式对外发布前建议补充权威机构数据并进行事实核验。</p>
+        </section>
+      </div>
+    </section>
+  </main>
+  <div class="copy-toast" id="toast">已复制报告正文</div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const BRAND_NAMES = {
+      cn: { lg: "LG", samsung: "三星", sony: "索尼", apple: "苹果", huawei: "华为", xiaomi: "小米", hisense: "海信", tcl: "TCL", skyworth: "创维", corning: "康宁", dyson: "戴森", bosch: "博世", haier: "海尔", siemens: "西门子", midea: "美的", panasonic: "松下", oppo: "OPPO", lenovo: "联想", dell: "戴尔", asus: "华硕", byd: "比亚迪", tesla: "特斯拉", ideal: "理想", aux: "奥克斯", brita: "碧然德", philips: "飞利浦", ecovacs: "科沃斯", roborock: "石头", dreame: "追觅", irobot: "iRobot" },
+      en: { lg: "LG", samsung: "Samsung", sony: "Sony", apple: "Apple", huawei: "Huawei", xiaomi: "Xiaomi", hisense: "Hisense", tcl: "TCL", skyworth: "Skyworth", corning: "Corning", dyson: "Dyson", bosch: "Bosch", haier: "Haier", siemens: "Siemens", midea: "Midea", panasonic: "Panasonic", oppo: "OPPO", lenovo: "Lenovo", dell: "Dell", asus: "ASUS", byd: "BYD", tesla: "Tesla", ideal: "Li Auto", aux: "AUX", brita: "BRITA", philips: "Philips", ecovacs: "Ecovacs", roborock: "Roborock", dreame: "Dreame", irobot: "iRobot" },
+      ko: { lg: "LG", samsung: "삼성", sony: "소니", apple: "애플", huawei: "화웨이", xiaomi: "샤오미", hisense: "하이센스", tcl: "TCL", skyworth: "스카이워스", corning: "코닝", dyson: "다이슨", bosch: "보쉬", haier: "하이얼", siemens: "지멘스", midea: "메이디", panasonic: "파나소닉", oppo: "OPPO", lenovo: "레노버", dell: "델", asus: "에이수스", byd: "BYD", tesla: "테슬라", ideal: "리오토", aux: "AUX", brita: "브리타", philips: "필립스", ecovacs: "에코백스", roborock: "로보락", dreame: "드리미", irobot: "iRobot" }
+    };
+
+    const I18N = {
+      cn: {
+        htmlLang: "zh-CN",
+        pageTitle: "专业市场分析报告生成器",
+        delimiter: "、",
+        ui: {
+          badge: "市场分析报告 Skill",
+          powered: "Powered by BI Team",
+          appTitle: "一键生成专业市场分析报告",
+          appSubtitle: "输入产品名称后，品牌、品类、卖点、竞品等信息将自动识别，报告即时生成。如需精细调整，可展开\"高级设置\"手动覆盖。",
+          apiTitle: "AI API 配置",
+          optional: "可选",
+          apiDesc: "配置 API 后，可扩展 AI 创意生成、文章重写和更深度的页面诊断。支持 OpenAI / DeepSeek / 通义千问等兼容接口。",
+          apiMini: "支持 OpenAI / DeepSeek / 通义千问等兼容接口。",
+          edit: "修改",
+          save: "保存",
+          apiConfigured: "已配置",
+          apiIncomplete: "未完整配置",
+          apiSaved: "API 配置已保存",
+          apiNotComplete: "API 配置未完整",
+          apiEditReady: "可以修改 API 配置",
+          productName: "产品名称",
+          autoResult: "自动识别结果：",
+          researchLabel: "粘贴联网检索资料",
+          researchOptional: "可选，让报告更精准",
+          advanced: "高级设置（手动覆盖）",
+          brand: "品牌",
+          category: "行业/品类",
+          price: "当前售价",
+          market: "目标市场",
+          features: "核心卖点（每行一个）",
+          competitors: "竞品/对标品牌",
+          purpose: "报告用途",
+          analyze: "分析产品",
+          copy: "复制正文",
+          print: "打印/PDF",
+          reset: "恢复示例",
+          bannerTag: "Powered by BI Team · AI Market Report Generator",
+          bannerTitle: "从产品信息到老板级市场分析报告",
+          bannerSub: "支持任意产品快速生成趋势洞察、竞品定位、SWOT、用户画像与战略行动计划。",
+          sec1: "一、执行摘要",
+          sec1Sub: "Executive Summary",
+          sec2: "二、行业趋势洞察",
+          sec2Sub: "Market Trend",
+          trendTitle: "关键趋势判断",
+          driverTitle: "增长驱动因素",
+          sec3: "三、产品能力矩阵",
+          sec3Sub: "Product Matrix",
+          featureTh1: "核心能力",
+          featureTh2: "用户价值",
+          featureTh3: "商业转化含义",
+          sec4: "四、竞品与定位分析",
+          sec4Sub: "Competition",
+          compTh1: "竞争阵营",
+          compTh2: "代表品牌",
+          compTh3: "主要优势",
+          compTh4: "本产品突破口",
+          sec5: "五、SWOT 分析",
+          sec5Sub: "Strategic Diagnosis",
+          sec6: "六、用户画像与转化诊断",
+          sec6Sub: "User Insight",
+          personaTh1: "用户类型",
+          personaTh2: "核心诉求",
+          personaTh3: "推荐话术",
+          funnelTitle: "转化漏斗重点",
+          sec7: "七、战略建议与行动计划",
+          sec7Sub: "Action Plan",
+          sec8: "八、数据来源与免责声明",
+          sec8Sub: "Sources",
+          disclaimer: "免责声明：本报告由工具基于用户输入、公开检索资料和通用市场分析框架生成，仅供内部讨论和商业决策参考；正式对外发布前建议补充权威机构数据并进行事实核验。",
+          copyToast: "已复制报告正文",
+          langToast: "已切换中文界面",
+          analyzing: "自动识别中…",
+          recognized: "✓ 已自动识别",
+          previewPrefix: "竞品：",
+          sourceUserData: "用户粘贴资料",
+          sourceFramework: "通用市场框架"
+        },
+        placeholders: {
+          productName: "例：苹果 iPhone 17 Pro、LG 冰箱 Objet、小米 SU7 Ultra …",
+          research: "把网页、新闻、行业报告中的关键信息粘贴到这里，生成结果会自动吸收这些信息。"
+        },
+        defaults: {
+          productName: "LG NanoCell AI NANO80 4K 智能电视 2025",
+          brand: "LG",
+          category: "AI电视 / 智能电视",
+          price: "¥3,599",
+          market: "中国市场",
+          features: "α7 AI 音/画芯片 Gen8\nNanoCell AI 纯净色彩\nwebOS 支持 5 年 4 次升级\nVRR 可变刷新率\nAI 动感遥控器",
+          competitors: "海信、TCL、小米、索尼、三星",
+          research: "公开资料显示，中国智能电视市场正从硬件参数竞争转向 AI 画质、智能交互、内容生态和大尺寸换机需求竞争。线上渠道和直播电商持续影响中端价位段产品转化。"
+        },
+        purposeOptions: ["老板汇报 / 新品立项 / 市场进入判断", "销售培训 / 门店话术 / 渠道策略", "竞品分析 / 产品定位 / 营销策略"],
+        auto: {
+          unknownBrand: "未识别品牌",
+          defaultCategory: "消费电子 / 智能设备",
+          defaultCompetitorKeys: ["samsung", "lg", "huawei", "xiaomi", "haier"],
+          defaultFeatures: "智能互联\nAI功能\n旗舰体验\n能效优化\n售后服务",
+          priceUnknown: "价格待确认",
+          priceFrom: (n) => `¥${Number(n).toLocaleString("zh-CN")}起`
+        },
+        categories: {
+          tv: "AI电视 / 智能电视",
+          refrigerator: "冰箱 / 厨房电器",
+          washer: "洗衣机 / 家用电器",
+          ac: "空调 / 暖通设备",
+          styler: "衣物护理机 / 家居护理电器",
+          phone: "智能手机",
+          earbuds: "TWS耳机 / 音频设备",
+          laptop: "笔记本电脑",
+          car: "新能源汽车 / 智能出行",
+          purifier: "净水器 / 家用水处理",
+          vacuum: "扫地机器人 / 清洁电器"
+        },
+        featureSets: {
+          tv: "α7 AI 画质芯片\nAI 画质增强\n4K 超高清显示\n智能语音控制\n内容生态联动",
+          refrigerator: "智能温控系统\n节能双变频\n大容量分区储鲜\n食材管理 AI\n家电互联",
+          washer: "智能洗涤程序\n除菌洗护\n变频节能\n超静音电机\n远程APP控制",
+          ac: "AI 自适应控温\n健康净化\n变频节能\n全直流变频\n智能联控",
+          styler: "双重蒸汽护理\n双变频热泵烘干\n抚皱塑形护理\n镜面设计外观\n大件衣物护理容量",
+          phone: "AI 影像系统\n旗舰芯片\n全天长续航\n卫星通信\n生态协同",
+          earbuds: "主动降噪\n空间音频\n无线连接\n长续航\n多设备切换",
+          laptop: "高性能芯片\n轻薄机身\n全天续航\n高刷屏幕\n专业生产力",
+          car: "智能座舱\nAI 辅助驾驶\n超级续航\n快充技术\n车联网 OTA",
+          purifier: "多级过滤技术\n直饮健康\n智能滤芯监测\n无桶净饮\nApp 远程管理"
+        },
+        categoryKeyword(category) {
+          if (/电视|TV|显示/i.test(category)) return "AI画质、智能交互、大尺寸换机、内容生态";
+          if (/衣物护理|Styler/i.test(category)) return "高端家务省时、蒸汽健康护理、精致生活升级、空间美学家电";
+          if (/冰箱|洗衣|空调|家电/i.test(category)) return "节能、智能控制、健康场景、套系化购买";
+          if (/手机|电脑|数码/i.test(category)) return "AI性能、生态协同、影像体验、生产力场景";
+          if (/汽车|车/i.test(category)) return "智能座舱、能耗效率、安全辅助、品牌信任";
+          return "智能化升级、价格带竞争、渠道效率、用户体验";
+        },
+        featureValue(feature) {
+          if (/蒸汽|除菌|除味|护理/i.test(feature)) return ["通过蒸汽护理减少异味、褶皱和日常清洁焦虑", "适合演示衣物护理前后对比，强化高端家务省时价值"];
+          if (/热泵|烘干|变频/i.test(feature)) return ["提升低温烘干效率，降低精致衣物护理损伤感", "可作为区别普通挂烫机和传统烘干机的技术证据"];
+          if (/抚皱|塑形|裤线/i.test(feature)) return ["让通勤衣物保持体面状态，减少外出熨烫和干洗依赖", "适合围绕西装、衬衫、裤子等高频场景做销售话术"];
+          if (/镜面|外观|设计/i.test(feature)) return ["从功能家电升级为家居空间的一部分", "可提升高客单产品的陈列质感和高端心智"];
+          if (/容量|衣服|裤子|件/i.test(feature)) return ["覆盖多件衣物和家庭日常护理需求", "有助于把单品体验转化为家庭场景购买理由"];
+          if (/AI|芯片|智能|Agent/i.test(feature)) return ["提升体验自动化与差异化感知", "适合在门店/直播中做可视化演示，强化高端心智"];
+          if (/色彩|画质|显示|屏|4K|OLED|Mini/i.test(feature)) return ["直接改善核心使用体验", "可通过对比素材建立“看得见”的购买理由"];
+          if (/系统|升级|生态|webOS|软件/i.test(feature)) return ["延长产品生命周期，降低过时焦虑", "可作为售后承诺和会员运营抓手"];
+          if (/价格|折扣|促销|会员/i.test(feature)) return ["降低首次购买门槛", "适合打造限时爆品和转化钩子"];
+          return ["满足细分场景需求", "用于包装差异化卖点并支撑销售话术"];
+        }
+      },
+      en: {
+        htmlLang: "en",
+        pageTitle: "Professional Market Report Generator",
+        delimiter: ", ",
+        ui: {
+          badge: "Market Report Skill",
+          powered: "Powered by BI Team",
+          appTitle: "Generate a professional market report in one click",
+          appSubtitle: "Enter a product name and the tool will infer brand, category, selling points and competitors, then generate the report instantly. Expand Advanced Settings for manual overrides.",
+          apiTitle: "AI API Settings",
+          optional: "Optional",
+          apiDesc: "After configuring an API, you can extend AI ideation, rewriting and deeper page diagnosis. Compatible with OpenAI / DeepSeek / Qwen-style APIs.",
+          apiMini: "Supports OpenAI / DeepSeek / Qwen-compatible APIs.",
+          edit: "Edit",
+          save: "Save",
+          apiConfigured: "Configured",
+          apiIncomplete: "Incomplete",
+          apiSaved: "API settings saved",
+          apiNotComplete: "API settings are incomplete",
+          apiEditReady: "API settings can be edited",
+          productName: "Product Name",
+          autoResult: "Auto-detected: ",
+          researchLabel: "Paste Web Research",
+          researchOptional: "Optional, improves accuracy",
+          advanced: "Advanced Settings (manual override)",
+          brand: "Brand",
+          category: "Industry / Category",
+          price: "Current Price",
+          market: "Target Market",
+          features: "Core Selling Points (one per line)",
+          competitors: "Competitors / Benchmarks",
+          purpose: "Report Purpose",
+          analyze: "Analyze Product",
+          copy: "Copy Text",
+          print: "Print / PDF",
+          reset: "Restore Sample",
+          bannerTag: "Powered by BI Team · AI Market Report Generator",
+          bannerTitle: "From Product Input to Executive Market Report",
+          bannerSub: "Generate market trends, competition mapping, SWOT, user insights and action plans for any product.",
+          sec1: "1. Executive Summary",
+          sec1Sub: "Executive Summary",
+          sec2: "2. Market Trend Insights",
+          sec2Sub: "Market Trend",
+          trendTitle: "Key Trend Judgment",
+          driverTitle: "Growth Drivers",
+          sec3: "3. Product Capability Matrix",
+          sec3Sub: "Product Matrix",
+          featureTh1: "Core Capability",
+          featureTh2: "User Value",
+          featureTh3: "Commercial Meaning",
+          sec4: "4. Competition and Positioning",
+          sec4Sub: "Competition",
+          compTh1: "Competitive Camp",
+          compTh2: "Representative Brands",
+          compTh3: "Main Advantage",
+          compTh4: "Breakthrough Point",
+          sec5: "5. SWOT Analysis",
+          sec5Sub: "Strategic Diagnosis",
+          sec6: "6. Persona and Conversion Diagnosis",
+          sec6Sub: "User Insight",
+          personaTh1: "User Type",
+          personaTh2: "Core Need",
+          personaTh3: "Recommended Message",
+          funnelTitle: "Conversion Funnel Priorities",
+          sec7: "7. Strategic Recommendations and Action Plan",
+          sec7Sub: "Action Plan",
+          sec8: "8. Sources and Disclaimer",
+          sec8Sub: "Sources",
+          disclaimer: "Disclaimer: This report is generated from user input, public research material and common market-analysis frameworks. It is for internal discussion and business decision support only. Add authoritative data and fact-check before external publication.",
+          copyToast: "Report text copied",
+          langToast: "English mode selected",
+          analyzing: "Detecting…",
+          recognized: "✓ Auto-detected",
+          previewPrefix: "Competitors: ",
+          sourceUserData: "pasted user research",
+          sourceFramework: "general market framework"
+        },
+        placeholders: {
+          productName: "e.g. Apple iPhone 17 Pro, LG Objet refrigerator, Xiaomi SU7 Ultra …",
+          research: "Paste key facts from webpages, news or industry reports here. The generated report will absorb the material."
+        },
+        defaults: {
+          productName: "LG NanoCell AI NANO80 4K Smart TV 2025",
+          brand: "LG",
+          category: "AI TV / Smart TV",
+          price: "¥3,599",
+          market: "China market",
+          features: "α7 AI picture and sound chip Gen8\nNanoCell AI pure color\nwebOS support with 4 upgrades over 5 years\nVRR variable refresh rate\nAI Magic Remote",
+          competitors: "Hisense, TCL, Xiaomi, Sony, Samsung",
+          research: "Public sources indicate that China's smart TV market is shifting from hardware-spec competition toward AI picture quality, smart interaction, content ecosystems and large-screen replacement demand. Online channels and livestream commerce continue to influence mid-range conversion."
+        },
+        purposeOptions: ["Executive briefing / New product planning / Market entry decision", "Sales training / Store pitch / Channel strategy", "Competitor analysis / Product positioning / Marketing strategy"],
+        auto: {
+          unknownBrand: "Unidentified brand",
+          defaultCategory: "Consumer electronics / Smart devices",
+          defaultCompetitorKeys: ["samsung", "lg", "huawei", "xiaomi", "haier"],
+          defaultFeatures: "Smart connectivity\nAI capabilities\nFlagship experience\nEnergy efficiency\nAfter-sales service",
+          priceUnknown: "Price TBD",
+          priceFrom: (n) => `From ¥${Number(n).toLocaleString("en-US")}`
+        },
+        categories: {
+          tv: "AI TV / Smart TV",
+          refrigerator: "Refrigerator / Kitchen Appliance",
+          washer: "Washing Machine / Home Appliance",
+          ac: "Air Conditioner / HVAC",
+          styler: "Clothing Care System / Home Care Appliance",
+          phone: "Smartphone",
+          earbuds: "TWS Earbuds / Audio Device",
+          laptop: "Laptop",
+          car: "New Energy Vehicle / Smart Mobility",
+          purifier: "Water Purifier / Home Water Treatment",
+          vacuum: "Robot Vacuum / Cleaning Appliance"
+        },
+        featureSets: {
+          tv: "α7 AI picture processor\nAI picture enhancement\n4K ultra-high-definition display\nSmart voice control\nContent ecosystem integration",
+          refrigerator: "Smart temperature control\nEnergy-saving dual inverter\nLarge-capacity fresh zones\nAI food management\nConnected home appliance",
+          washer: "Smart washing programs\nHygienic fabric care\nInverter energy saving\nUltra-quiet motor\nRemote app control",
+          ac: "AI adaptive temperature control\nHealthy air purification\nInverter energy saving\nFull DC inverter\nSmart home linkage",
+          styler: "Dual steam care\nDual inverter heat-pump drying\nWrinkle reduction and reshaping\nMirror-finish design\nLarge garment-care capacity",
+          phone: "AI imaging system\nFlagship chipset\nAll-day battery life\nSatellite communication\nEcosystem synergy",
+          earbuds: "Active noise cancellation\nSpatial audio\nWireless connectivity\nLong battery life\nMulti-device switching",
+          laptop: "High-performance chip\nLightweight body\nAll-day battery life\nHigh-refresh display\nProfessional productivity",
+          car: "Smart cockpit\nAI driver assistance\nLong-range battery\nFast charging\nConnected OTA updates",
+          purifier: "Multi-stage filtration\nHealthy direct drinking\nSmart filter monitoring\nTankless purification\nRemote app management"
+        },
+        categoryKeyword(category) {
+          if (/TV|display|电视|显示/i.test(category)) return "AI picture quality, smart interaction, large-screen replacement and content ecosystems";
+          if (/styler|clothing care|衣物护理/i.test(category)) return "premium time-saving home care, steam hygiene, lifestyle upgrades and aesthetic appliances";
+          if (/refrigerator|washer|air|appliance|冰箱|洗衣|空调/i.test(category)) return "energy efficiency, smart control, health scenarios and bundled appliance purchases";
+          if (/phone|laptop|computer|手机|电脑/i.test(category)) return "AI performance, ecosystem synergy, imaging experience and productivity scenarios";
+          if (/car|vehicle|EV|汽车|车/i.test(category)) return "smart cockpit, energy efficiency, safety assistance and brand trust";
+          return "smart upgrades, price-band competition, channel efficiency and user experience";
+        },
+        featureValue(feature) {
+          if (/steam|hygiene|odor|care|蒸汽|护理/i.test(feature)) return ["Reduces odor, wrinkles and daily garment-care anxiety through steam care", "Works well for before-and-after demos that reinforce premium time-saving home care"];
+          if (/heat.?pump|drying|inverter|热泵|烘干|变频/i.test(feature)) return ["Improves low-temperature drying efficiency and lowers perceived damage to delicate garments", "Serves as technical proof against simple steamers and traditional dryers"];
+          if (/wrinkle|reshape|pants|trouser|抚皱|塑形/i.test(feature)) return ["Keeps commute garments presentable and reduces dependence on ironing or dry cleaning", "Supports sales scripts around suits, shirts and trousers"];
+          if (/mirror|finish|design|镜面|外观/i.test(feature)) return ["Moves the appliance from utility hardware into home-space aesthetics", "Improves premium display quality and high-ticket product perception"];
+          if (/capacity|garment|clothes|pants|容量|衣服|裤子/i.test(feature)) return ["Covers multi-garment and family daily care needs", "Turns single-product experience into a household scenario reason-to-buy"];
+          if (/AI|chip|processor|smart|芯片|智能/i.test(feature)) return ["Raises automation and perceived differentiation", "Works well in stores and livestreams through visible demos that reinforce a premium mindset"];
+          if (/color|picture|display|screen|4K|OLED|Mini|色彩|画质|显示|屏/i.test(feature)) return ["Directly improves the core usage experience", "Builds a visible reason-to-buy through side-by-side comparison material"];
+          if (/system|upgrade|ecosystem|webOS|software|系统|升级|生态/i.test(feature)) return ["Extends the product lifecycle and lowers obsolescence anxiety", "Can support after-sales promises and membership operations"];
+          if (/price|discount|promotion|member|价格|折扣|促销/i.test(feature)) return ["Lowers the first-purchase threshold", "Suitable for limited-time offers and conversion hooks"];
+          return ["Meets a focused scenario need", "Can be packaged as differentiated selling material for sales scripts"];
+        }
+      },
+      ko: {
+        htmlLang: "ko",
+        pageTitle: "전문 시장 분석 보고서 생성기",
+        delimiter: ", ",
+        ui: {
+          badge: "시장 분석 보고서 Skill",
+          powered: "Powered by BI Team",
+          appTitle: "전문 시장 분석 보고서 원클릭 생성",
+          appSubtitle: "제품명을 입력하면 브랜드, 카테고리, 핵심 소구점, 경쟁 제품을 자동으로 추정하고 보고서를 즉시 생성합니다. 세부 조정은 고급 설정에서 직접 덮어쓸 수 있습니다.",
+          apiTitle: "AI API 설정",
+          optional: "선택",
+          apiDesc: "API를 설정하면 AI 아이디어 생성, 문장 재작성, 더 깊은 페이지 진단을 확장할 수 있습니다. OpenAI / DeepSeek / Qwen 호환 API를 지원합니다.",
+          apiMini: "OpenAI / DeepSeek / Qwen 호환 API 지원.",
+          edit: "수정",
+          save: "저장",
+          apiConfigured: "설정됨",
+          apiIncomplete: "미완료",
+          apiSaved: "API 설정이 저장되었습니다",
+          apiNotComplete: "API 설정이 완전하지 않습니다",
+          apiEditReady: "API 설정을 수정할 수 있습니다",
+          productName: "제품명",
+          autoResult: "자동 인식 결과: ",
+          researchLabel: "웹 리서치 자료 붙여넣기",
+          researchOptional: "선택, 보고서 정확도 향상",
+          advanced: "고급 설정 (수동 덮어쓰기)",
+          brand: "브랜드",
+          category: "산업 / 카테고리",
+          price: "현재 판매가",
+          market: "목표 시장",
+          features: "핵심 소구점 (한 줄에 하나)",
+          competitors: "경쟁 / 벤치마크 브랜드",
+          purpose: "보고서 용도",
+          analyze: "제품 분석",
+          copy: "본문 복사",
+          print: "인쇄 / PDF",
+          reset: "예시 복원",
+          bannerTag: "Powered by BI Team · AI Market Report Generator",
+          bannerTitle: "제품 정보에서 임원 보고용 시장 분석까지",
+          bannerSub: "어떤 제품이든 시장 트렌드, 경쟁 포지셔닝, SWOT, 사용자 인사이트와 실행 계획을 빠르게 생성합니다.",
+          sec1: "1. 실행 요약",
+          sec1Sub: "Executive Summary",
+          sec2: "2. 시장 트렌드 인사이트",
+          sec2Sub: "Market Trend",
+          trendTitle: "핵심 트렌드 판단",
+          driverTitle: "성장 동인",
+          sec3: "3. 제품 역량 매트릭스",
+          sec3Sub: "Product Matrix",
+          featureTh1: "핵심 역량",
+          featureTh2: "사용자 가치",
+          featureTh3: "사업 전환 의미",
+          sec4: "4. 경쟁 및 포지셔닝 분석",
+          sec4Sub: "Competition",
+          compTh1: "경쟁 그룹",
+          compTh2: "대표 브랜드",
+          compTh3: "주요 강점",
+          compTh4: "돌파 포인트",
+          sec5: "5. SWOT 분석",
+          sec5Sub: "Strategic Diagnosis",
+          sec6: "6. 사용자 페르소나 및 전환 진단",
+          sec6Sub: "User Insight",
+          personaTh1: "사용자 유형",
+          personaTh2: "핵심 니즈",
+          personaTh3: "추천 메시지",
+          funnelTitle: "전환 퍼널 중점",
+          sec7: "7. 전략 제안 및 실행 계획",
+          sec7Sub: "Action Plan",
+          sec8: "8. 데이터 출처 및 면책 고지",
+          sec8Sub: "Sources",
+          disclaimer: "면책 고지: 본 보고서는 사용자 입력, 공개 리서치 자료, 일반적인 시장 분석 프레임워크를 기반으로 생성되며 내부 논의와 사업 의사결정 참고용입니다. 외부 공개 전에는 권위 있는 데이터 보강과 사실 검증이 필요합니다.",
+          copyToast: "보고서 본문이 복사되었습니다",
+          langToast: "한국어 모드로 전환됨",
+          analyzing: "자동 인식 중…",
+          recognized: "✓ 자동 인식 완료",
+          previewPrefix: "경쟁사: ",
+          sourceUserData: "사용자가 붙여넣은 자료",
+          sourceFramework: "일반 시장 프레임워크"
+        },
+        placeholders: {
+          productName: "예: Apple iPhone 17 Pro, LG Objet 냉장고, Xiaomi SU7 Ultra …",
+          research: "웹페이지, 뉴스, 산업 보고서의 핵심 정보를 여기에 붙여넣으세요. 생성 결과가 해당 내용을 반영합니다."
+        },
+        defaults: {
+          productName: "LG NanoCell AI NANO80 4K 스마트 TV 2025",
+          brand: "LG",
+          category: "AI TV / 스마트 TV",
+          price: "¥3,599",
+          market: "중국 시장",
+          features: "α7 AI 화질/음향 칩 Gen8\nNanoCell AI 순색 표현\nwebOS 5년 4회 업그레이드 지원\nVRR 가변 주사율\nAI 매직 리모컨",
+          competitors: "하이센스, TCL, 샤오미, 소니, 삼성",
+          research: "공개 자료에 따르면 중국 스마트 TV 시장은 하드웨어 사양 경쟁에서 AI 화질, 스마트 인터랙션, 콘텐츠 생태계, 대화면 교체 수요 경쟁으로 이동하고 있습니다. 온라인 채널과 라이브 커머스는 중가 제품 전환에 계속 영향을 줍니다."
+        },
+        purposeOptions: ["임원 보고 / 신제품 기획 / 시장 진입 판단", "영업 교육 / 매장 화법 / 채널 전략", "경쟁 분석 / 제품 포지셔닝 / 마케팅 전략"],
+        auto: {
+          unknownBrand: "미식별 브랜드",
+          defaultCategory: "소비자 전자 / 스마트 기기",
+          defaultCompetitorKeys: ["samsung", "lg", "huawei", "xiaomi", "haier"],
+          defaultFeatures: "스마트 연결\nAI 기능\n플래그십 경험\n에너지 효율\nA/S 서비스",
+          priceUnknown: "가격 확인 필요",
+          priceFrom: (n) => `¥${Number(n).toLocaleString("ko-KR")}부터`
+        },
+        categories: {
+          tv: "AI TV / 스마트 TV",
+          refrigerator: "냉장고 / 주방 가전",
+          washer: "세탁기 / 생활 가전",
+          ac: "에어컨 / HVAC",
+          styler: "의류 관리기 / 홈케어 가전",
+          phone: "스마트폰",
+          earbuds: "TWS 이어폰 / 오디오 기기",
+          laptop: "노트북",
+          car: "신에너지차 / 스마트 모빌리티",
+          purifier: "정수기 / 가정용 수처리",
+          vacuum: "로봇 청소기 / 청소 가전"
+        },
+        featureSets: {
+          tv: "α7 AI 화질 프로세서\nAI 화질 향상\n4K 초고화질 디스플레이\n스마트 음성 제어\n콘텐츠 생태계 연동",
+          refrigerator: "스마트 온도 제어\n에너지 절감 듀얼 인버터\n대용량 신선 보관 구역\nAI 식재료 관리\n가전 연결",
+          washer: "스마트 세탁 프로그램\n위생 케어\n인버터 에너지 절감\n초저소음 모터\n앱 원격 제어",
+          ac: "AI 적응형 온도 제어\n건강 공기 정화\n인버터 에너지 절감\n풀 DC 인버터\n스마트 연동",
+          styler: "듀얼 스팀 케어\n듀얼 인버터 히트펌프 건조\n구김 완화와 스타일링\n미러 디자인\n대용량 의류 관리",
+          phone: "AI 카메라 시스템\n플래그십 칩셋\n종일 지속 배터리\n위성 통신\n생태계 시너지",
+          earbuds: "액티브 노이즈 캔슬링\n공간 음향\n무선 연결\n긴 배터리 시간\n멀티 디바이스 전환",
+          laptop: "고성능 칩\n경량 바디\n종일 지속 배터리\n고주사율 디스플레이\n전문 생산성",
+          car: "스마트 콕핏\nAI 주행 보조\n긴 주행거리\n급속 충전\n커넥티드 OTA",
+          purifier: "다단계 필터링\n건강한 직수 음용\n스마트 필터 모니터링\n무탱크 정수\n앱 원격 관리"
+        },
+        categoryKeyword(category) {
+          if (/TV|display|电视|显示|스마트 TV/i.test(category)) return "AI 화질, 스마트 인터랙션, 대화면 교체, 콘텐츠 생태계";
+          if (/styler|clothing care|의류 관리/i.test(category)) return "고급 가사 시간 절감, 스팀 위생 케어, 라이프스타일 업그레이드, 미학형 가전";
+          if (/refrigerator|washer|air|appliance|냉장고|세탁기|에어컨|가전/i.test(category)) return "에너지 효율, 스마트 제어, 건강 사용 장면, 세트 구매";
+          if (/phone|laptop|computer|스마트폰|노트북/i.test(category)) return "AI 성능, 생태계 연동, 영상 경험, 생산성 시나리오";
+          if (/car|vehicle|EV|자동차|차|모빌리티/i.test(category)) return "스마트 콕핏, 에너지 효율, 안전 보조, 브랜드 신뢰";
+          return "스마트 업그레이드, 가격대 경쟁, 채널 효율, 사용자 경험";
+        },
+        featureValue(feature) {
+          if (/steam|hygiene|odor|care|스팀|케어|蒸汽|护理/i.test(feature)) return ["스팀 케어로 냄새, 구김, 일상 의류 관리 불안을 줄임", "관리 전후 비교 시연에 적합해 프리미엄 홈케어 시간 절약 가치를 강화"];
+          if (/heat.?pump|drying|inverter|히트펌프|건조|인버터|热泵|烘干|变频/i.test(feature)) return ["저온 건조 효율을 높이고 섬세한 의류 손상 우려를 낮춤", "단순 스팀다리미와 기존 건조기 대비 기술 근거로 활용 가능"];
+          if (/wrinkle|reshape|pants|구김|스타일링|抚皱|塑形/i.test(feature)) return ["출근 의류를 단정하게 유지하고 다림질/드라이클리닝 의존도를 줄임", "정장, 셔츠, 바지 같은 고빈도 장면 중심 영업 화법에 적합"];
+          if (/mirror|finish|design|미러|디자인|镜面|外观/i.test(feature)) return ["기능 가전을 집 안 공간 미학의 일부로 확장", "고객 단가가 높은 제품의 진열감과 프리미엄 인식을 높임"];
+          if (/capacity|garment|clothes|pants|용량|의류|容量|衣服|裤子/i.test(feature)) return ["여러 벌 의류와 가족의 일상 관리 수요를 커버", "단일 제품 체험을 가족 사용 장면의 구매 이유로 전환"];
+          if (/AI|chip|processor|smart|칩|스마트/i.test(feature)) return ["경험 자동화와 차별화 인식을 높임", "매장/라이브에서 시각적으로 시연하기 좋아 프리미엄 인식을 강화"];
+          if (/color|picture|display|screen|4K|OLED|Mini|화질|색|디스플레이/i.test(feature)) return ["핵심 사용 경험을 직접 개선", "비교 소재를 통해 눈에 보이는 구매 이유를 만들 수 있음"];
+          if (/system|upgrade|ecosystem|webOS|software|시스템|업그레이드|생태계/i.test(feature)) return ["제품 수명주기를 늘리고 노후화 불안을 낮춤", "A/S 약속과 멤버십 운영의 근거로 활용 가능"];
+          if (/price|discount|promotion|member|가격|할인|프로모션/i.test(feature)) return ["첫 구매 장벽을 낮춤", "한정 혜택과 전환 후크 설계에 적합"];
+          return ["세분화된 사용 장면의 니즈를 충족", "차별화 소구점과 영업 스크립트로 포장 가능"];
+        }
+      }
+    };
+
+    let currentLang = "cn";
+
+    const BRAND_MAP = [
+      [/\bLG\b/i, "lg"],
+      [/Samsung|三星|삼성/i, "samsung"],
+      [/Sony|索尼|소니/i, "sony"],
+      [/Apple|苹果|애플/i, "apple"],
+      [/华为|Huawei|화웨이/i, "huawei"],
+      [/小米|Xiaomi|샤오미/i, "xiaomi"],
+      [/海信|Hisense|하이센스/i, "hisense"],
+      [/TCL/i, "tcl"],
+      [/创维|Skyworth|스카이워스/i, "skyworth"],
+      [/康宁|Corning|코닝/i, "corning"],
+      [/戴森|Dyson|다이슨/i, "dyson"],
+      [/博世|Bosch|보쉬/i, "bosch"]
+    ];
+
+    const CATEGORY_MAP = [
+      [/电视|TV|OLED|NANO|NanoCell|MiniLED|QLED|液晶|显示器|스마트 TV/i, ["tv", ["hisense","tcl","xiaomi","sony","samsung"]]],
+      [/冰箱|Refrigerator|冷藏|냉장고/i, ["refrigerator", ["haier","siemens","midea","panasonic","samsung"]]],
+      [/洗衣机|滚筒|波轮|Washing|세탁기/i, ["washer", ["haier","siemens","midea","panasonic","samsung"]]],
+      [/空调|Air.?Con|Aircon|暖通|에어컨/i, ["ac", ["midea","haier","aux","panasonic","samsung"]]],
+      [/Styler|衣物护理|蒸汽衣物护理|蒸汽护理|抚皱|塑形|의류 관리/i, ["styler", ["samsung","haier","panasonic","hisense","xiaomi"]]],
+      [/手机|Phone|iPhone|Galaxy|Pixel|스마트폰/i, ["phone", ["huawei","apple","samsung","xiaomi","oppo"]]],
+      [/耳机|AirPods|Headphone|Earbud|이어폰/i, ["earbuds", ["apple","samsung","sony","xiaomi","huawei"]]],
+      [/笔记本|Laptop|MacBook|ThinkPad|노트북/i, ["laptop", ["apple","lenovo","huawei","dell","asus"]]],
+      [/汽车|Car|EV|新能源|SUV|轿车|자동차|모빌리티/i, ["car", ["byd","tesla","xiaomi","huawei","ideal"]]],
+      [/净水|饮水|Water.?Purif|정수기/i, ["purifier", ["bosch","brita","xiaomi","philips","panasonic"]]],
+      [/扫地机|吸尘器|Roomba|Robot.?Vacuum|로봇 청소기/i, ["vacuum", ["ecovacs","roborock","xiaomi","dreame","irobot"]]]
+    ];
+
+    const FEATURE_PATTERNS = [
+      [/电视|TV|OLED|NANO|스마트 TV/i, "tv"],
+      [/冰箱|Refrigerator|냉장고/i, "refrigerator"],
+      [/洗衣机|Washing|세탁기/i, "washer"],
+      [/空调|Air.?Con|Aircon|에어컨/i, "ac"],
+      [/Styler|衣物护理|蒸汽衣物护理|蒸汽护理|抚皱|塑形|의류 관리/i, "styler"],
+      [/手机|iPhone|Phone|스마트폰/i, "phone"],
+      [/耳机|AirPods|Headphone|Earbud|이어폰/i, "earbuds"],
+      [/笔记本|Laptop|MacBook|노트북/i, "laptop"],
+      [/汽车|Car|EV|자동차|모빌리티/i, "car"],
+      [/净水|Water.?Purif|정수기/i, "purifier"]
+    ];
+
+    function pack() {
+      return I18N[currentLang] || I18N.cn;
+    }
+
+    function ui(key) {
+      return pack().ui[key] || I18N.cn.ui[key] || key;
+    }
+
+    function defaultsFor(lang = currentLang) {
+      return (I18N[lang] || I18N.cn).defaults;
+    }
+
+    function brandName(key) {
+      return (BRAND_NAMES[currentLang] && BRAND_NAMES[currentLang][key]) || BRAND_NAMES.cn[key] || key;
+    }
+
+    function brandList(keys) {
+      return keys.map(brandName).join(pack().delimiter);
+    }
+
+    function splitItems(text) {
+      return String(text).split(/\n|、|,|，/).map(x => x.trim()).filter(Boolean);
+    }
+
+    function productTitleFromInput(text) {
+      const lines = String(text).split(/\n+/).map(x => x.trim()).filter(Boolean);
+      if (lines.length >= 2 && /^[A-Z0-9-]{5,}$/i.test(lines[0])) return `${lines[0]} ${lines[1]}`;
+      return lines[0] || "";
+    }
+
+    function clampScore(value) {
+      return Math.max(42, Math.min(96, Math.round(value)));
+    }
+
+    function scoreSeed(text) {
+      return String(text).split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+    }
+
+    function productProfile(data) {
+      const text = `${data.productName} ${data.category} ${data.features.join(" ")}`;
+      const seed = scoreSeed(text);
+      const isStyler = /Styler|衣物护理|蒸汽护理|Clothing Care|의류 관리/i.test(text);
+      const isTv = /电视|TV|Smart TV|스마트 TV|OLED|NanoCell/i.test(text);
+      const isAppliance = /冰箱|洗衣|空调|家电|Refrigerator|Washer|Appliance|냉장고|세탁기|가전/i.test(text);
+      const base = isStyler ? {
+        icon: "wardrobe",
+        label: "LG Styler",
+        metrics: [["场景匹配", 92], ["高端心智", 88], ["演示价值", 90], ["转化潜力", 84]],
+        drivers: [["精致衣物护理", 92], ["蒸汽健康护理", 88], ["省时便利", 84], ["空间美学", 79], ["服务替代", 72]],
+        funnel: [["认知", 72], ["兴趣", 78], ["评估", 66], ["转化", 58], ["复购", 70]]
+      } : isTv ? {
+        icon: "screen",
+        label: "AI TV",
+        metrics: [["画质感知", 90], ["内容生态", 78], ["价格吸引", 82], ["渠道转化", 74]],
+        drivers: [["AI画质需求", 88], ["大屏换新", 82], ["内容生态", 76], ["价格吸引力", 72], ["门店演示", 68]],
+        funnel: [["认知", 76], ["兴趣", 72], ["评估", 64], ["转化", 56], ["复购", 62]]
+      } : isAppliance ? {
+        icon: "appliance",
+        label: "Smart Home",
+        metrics: [["健康场景", 84], ["节能效率", 80], ["家庭刚需", 86], ["套系潜力", 72]],
+        drivers: [["健康需求", 84], ["节能效率", 80], ["智能控制", 76], ["家庭换新", 74], ["服务信任", 68]],
+        funnel: [["认知", 70], ["兴趣", 74], ["评估", 68], ["转化", 60], ["复购", 66]]
+      } : {
+        icon: "device",
+        label: "Smart Device",
+        metrics: [["智能化", 82], ["品牌信任", 78], ["价格吸引", 74], ["体验演示", 70]],
+        drivers: [["智能化需求", 84], ["价格吸引力", 78], ["品牌信任", 72], ["渠道曝光", 68], ["体验演示", 63]],
+        funnel: [["认知", 72], ["兴趣", 70], ["评估", 62], ["转化", 55], ["复购", 60]]
+      };
+      return {
+        ...base,
+        metrics: base.metrics.map(([k, v], i) => [k, clampScore(v + ((seed + i * 7) % 9) - 4)]),
+        drivers: base.drivers.map(([k, v], i) => [k, clampScore(v + ((seed + i * 5) % 7) - 3)]),
+        funnel: base.funnel.map(([k, v], i) => [k, clampScore(v + ((seed + i * 3) % 7) - 3)])
+      };
+    }
+
+    function fieldLooksLikeDefault(id) {
+      const value = ($(id)?.value || "").trim();
+      return !value || Object.values(I18N).some(lang => value === lang.defaults[id]);
+    }
+
+    function getData() {
+      const d = defaultsFor();
+      const rawName = $("productName").value.trim() || d.productName;
+      const inf = inferFromName(rawName) || {};
+      const name = inf.displayName || productTitleFromInput(rawName) || rawName;
+      return {
+        productName: name,
+        brand:       $("brand").value.trim()       || inf.brand       || d.brand,
+        category:    $("category").value.trim()    || inf.category    || d.category,
+        price:       $("price").value.trim()       || inf.price       || pack().auto.priceUnknown,
+        market:      $("market").value.trim()      || inf.market      || d.market,
+        features:    splitItems($("features").value),
+        competitors: splitItems($("competitors").value),
+        research:    $("research").value.trim(),
+        purpose:     $("purpose").value
+      };
+    }
+
+    function inferFromName(name) {
+      if (!name) return null;
+
+      let brandKey = null;
+      for (const [re, key] of BRAND_MAP) {
+        if (re.test(name)) { brandKey = key; break; }
+      }
+
+      let categoryKey = null;
+      let autoCompetitors = pack().auto.defaultCompetitorKeys;
+      for (const [re, [catKey, comps]] of CATEGORY_MAP) {
+        if (re.test(name)) { categoryKey = catKey; autoCompetitors = comps; break; }
+      }
+
+      let featureKey = null;
+      for (const [re, key] of FEATURE_PATTERNS) {
+        if (re.test(name)) { featureKey = key; break; }
+      }
+
+      const brand = brandKey ? brandName(brandKey) : pack().auto.unknownBrand;
+      const compList = autoCompetitors
+        .filter(key => key !== brandKey && !new RegExp(brandName(key), "i").test(name))
+        .slice(0, 5);
+
+      let price = pack().auto.priceUnknown;
+      if (/Pro\s?Max|Ultra|旗舰|플래그십/i.test(name)) price = pack().auto.priceFrom(7999);
+      else if (/Pro\b|Plus\b|高端|고급/i.test(name)) price = pack().auto.priceFrom(4999);
+      else if (/\d{4,5}/i.test(name)) {
+        const m2 = name.match(/(\d{4,5})/);
+        if (m2) price = pack().auto.priceFrom(m2[1]);
+      } else price = pack().auto.priceFrom(3299);
+
+      return {
+        displayName: productTitleFromInput(name),
+        brand,
+        category: categoryKey ? pack().categories[categoryKey] : pack().auto.defaultCategory,
+        market: defaultsFor().market,
+        price,
+        features: featureKey ? pack().featureSets[featureKey] : pack().auto.defaultFeatures,
+        competitors: brandList(compList)
+      };
+    }
+
+    function applyInferredData(inferred) {
+      if (!inferred) return;
+      $("brand").value = inferred.brand;
+      $("category").value = inferred.category;
+      $("market").value = inferred.market;
+      $("price").value = inferred.price;
+      $("features").value = inferred.features;
+      $("competitors").value = inferred.competitors;
+      $("analyzeHint").textContent = ui("recognized");
+      $("autoPreview").style.display = "block";
+      $("autoPreviewText").textContent = `${inferred.brand} · ${inferred.category} · ${inferred.price} · ${ui("previewPrefix")}${inferred.competitors}`;
+    }
+
+    function runAnalysis() {
+      const hint = $("analyzeHint");
+      hint.innerHTML = `<span class="analyzing-spin">⟳</span> ${ui("analyzing")}`;
+      setTimeout(() => {
+        const name = $("productName").value.trim();
+        const inferred = inferFromName(name);
+        if (inferred) {
+          applyInferredData(inferred);
+        } else {
+          hint.textContent = "";
+        }
+        generateReport();
+      }, 480);
+    }
+
+    function renderVisuals(data, profile) {
+      $("metricGrid").innerHTML = profile.metrics.map(([label, value]) => `
+        <div class="metric"><b>${value}</b><span>${escapeHtml(label)}</span></div>
+      `).join("");
+
+      $("productVisual").innerHTML = `
+        <div class="product-device" data-label="${escapeHtml(profile.label)}"></div>
+      `;
+
+      const bubbles = data.competitors.slice(0, 5);
+      $("positionMap").innerHTML = bubbles.map((name, i) => {
+        const size = [86, 74, 68, 62, 58][i] || 56;
+        const x = [9, 52, 30, 66, 15][i] || 40;
+        const y = [15, 18, 55, 60, 66][i] || 45;
+        return `<div class="bubble" style="--size:${size}px;--x:${x}%;--y:${y}%;">${escapeHtml(name)}</div>`;
+      }).join("") + `<div class="bubble" style="--size:96px;--x:38%;--y:30%;background:rgba(165,0,52,.2);border-color:rgba(165,0,52,.42);">${escapeHtml(data.brand)}</div>`;
+
+      $("funnelChart").innerHTML = profile.funnel.map(([label, value]) => `
+        <div class="score-row"><span>${escapeHtml(label)}</span><div class="mini-chart"><span style="--score:${value}%"></span></div><b>${value}</b></div>
+      `).join("");
+    }
+
+    let autoAnalyzeTimer = null;
+    function scheduleAutoAnalysis() {
+      clearTimeout(autoAnalyzeTimer);
+      const hint = $("analyzeHint");
+      hint.innerHTML = `<span class="analyzing-spin">⟳</span> ${ui("analyzing")}`;
+      autoAnalyzeTimer = setTimeout(() => {
+        runAnalysis();
+      }, 620);
+    }
+
+    function toggleAdvanced() {
+      const sec = $("advancedSection");
+      const arrow = $("advArrow");
+      const open = sec.style.display !== "none";
+      sec.style.display = open ? "none" : "block";
+      arrow.textContent = open ? "▼" : "▲";
+    }
+
+    function todayCN() {
+      const d = new Date();
+      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"]/g, (m) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
+    }
+
+    function toggleApiCard() {
+      const card = $("apiCard");
+      card.classList.toggle("collapsed");
+      card.querySelector(".api-toggle").textContent = card.classList.contains("collapsed") ? "▼" : "▲";
+    }
+
+    function saveApiConfig() {
+      const cfg = {
+        base: $("apiBase").value.trim(),
+        key: $("apiKey").value.trim(),
+        model: $("apiModel").value.trim()
+      };
+      localStorage.setItem("marketReportApiConfig", JSON.stringify(cfg));
+      $("apiStatus").textContent = cfg.base && cfg.key && cfg.model ? ui("apiConfigured") : ui("apiIncomplete");
+      showToast(cfg.base && cfg.key && cfg.model ? ui("apiSaved") : ui("apiNotComplete"));
+    }
+
+    function editApiConfig() {
+      ["apiBase", "apiKey", "apiModel"].forEach(id => $(id).removeAttribute("readonly"));
+      $("apiKey").focus();
+      showToast(ui("apiEditReady"));
+    }
+
+    function loadApiConfig() {
+      try {
+        const raw = localStorage.getItem("marketReportApiConfig");
+        if (!raw) return;
+        const cfg = JSON.parse(raw);
+        if (cfg.base) $("apiBase").value = cfg.base;
+        if (cfg.key) $("apiKey").value = cfg.key;
+        if (cfg.model) $("apiModel").value = cfg.model;
+      } catch (e) {}
+    }
+
+    function setLang(lang) {
+      const nextLang = I18N[lang] ? lang : "cn";
+      const previousLang = currentLang;
+      const sampleFields = ["productName", "brand", "category", "price", "market", "features", "competitors", "research"];
+      const shouldSwapSamples = Object.fromEntries(sampleFields.map(id => [id, fieldLooksLikeDefault(id)]));
+
+      currentLang = nextLang;
+      localStorage.setItem("marketReportLang", currentLang);
+      document.documentElement.lang = pack().htmlLang;
+      document.title = pack().pageTitle;
+
+      document.querySelectorAll(".lang-switch button").forEach(btn => btn.classList.remove("active"));
+      const index = { ko: 0, en: 1, cn: 2 }[currentLang] ?? 2;
+      document.querySelectorAll(".lang-switch button")[index].classList.add("active");
+
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (ui(key)) el.textContent = ui(key);
+      });
+      $("bannerTitle").textContent = ui("bannerTitle");
+      $("bannerSub").textContent = ui("bannerSub");
+      $("productName").placeholder = pack().placeholders.productName;
+      $("research").placeholder = pack().placeholders.research;
+
+      const selectedIndex = $("purpose").selectedIndex > -1 ? $("purpose").selectedIndex : 0;
+      $("purpose").innerHTML = pack().purposeOptions.map(option => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join("");
+      $("purpose").selectedIndex = Math.min(selectedIndex, pack().purposeOptions.length - 1);
+
+      sampleFields.forEach(id => {
+        if (shouldSwapSamples[id]) $(id).value = defaultsFor()[id];
+      });
+
+      const statusConfigured = $("apiBase").value.trim() && $("apiKey").value.trim() && $("apiModel").value.trim();
+      $("apiStatus").textContent = statusConfigured ? ui("apiConfigured") : ui("apiIncomplete");
+      if ($("autoPreview").style.display !== "none") updateAutoPreview();
+      if ($("analyzeHint").textContent.trim()) $("analyzeHint").textContent = ui("recognized");
+      generateReport();
+      if (previousLang !== currentLang) showToast(ui("langToast"));
+    }
+
+    function updateAutoPreview() {
+      const inferred = inferFromName($("productName").value.trim());
+      if (!inferred) return;
+      applyInferredData(inferred);
+    }
+
+    function showToast(message) {
+      const toast = $("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function generateReport() {
+      const data = getData();
+      const featureText = data.features.slice(0, 5).join(pack().delimiter);
+      const competitors = data.competitors.length ? data.competitors.join(pack().delimiter) : (currentLang === "cn" ? "主要竞品" : currentLang === "en" ? "major competitors" : "주요 경쟁사");
+      const categoryKeys = pack().categoryKeyword(data.category);
+      const coreFeatureFallback = currentLang === "cn" ? "核心功能组合" : currentLang === "en" ? "core capability mix" : "핵심 기능 조합";
+      const isStyler = /Styler|衣物护理|蒸汽护理|Clothing Care|의류 관리/i.test(`${data.productName} ${data.category}`);
+      const profile = productProfile(data);
+      renderVisuals(data, profile);
+
+      if (currentLang === "cn") {
+        $("summary").textContent = `${data.productName}处于${data.market}${data.category}竞争升级的关键窗口。当前行业竞争正在从单纯硬件参数，转向${categoryKeys}等综合能力竞争。该产品以${featureText || coreFeatureFallback}为主要卖点，结合${data.price}的价格表达，可在中高端用户、换新用户和重视品牌信任的人群中建立“专业技术 + 性价比”的双重定位。面对${competitors}等竞争对手，建议将传播重点从参数罗列转向场景化价值证明，并用可演示、可比较、可量化的方式提升转化效率。`;
+      } else if (currentLang === "en") {
+        $("summary").textContent = `${data.productName} is entering a critical window in the ${data.market} ${data.category} segment as competition upgrades. The market is moving from pure hardware specifications toward integrated capabilities such as ${categoryKeys}. With ${featureText || coreFeatureFallback} as its main selling points and a ${data.price} price signal, the product can build a dual position of "credible technology + value for money" among mid-to-high-end buyers, replacement users and brand-trust seekers. Against ${competitors}, communication should shift from parameter lists to scenario-based proof that is demonstrable, comparable and measurable.`;
+      } else {
+        $("summary").textContent = `${data.productName}은 ${data.market} ${data.category} 경쟁이 고도화되는 중요한 구간에 있습니다. 시장 경쟁은 단순 하드웨어 사양에서 ${categoryKeys} 같은 종합 역량으로 이동하고 있습니다. 이 제품은 ${featureText || coreFeatureFallback}을 주요 소구점으로 삼고 ${data.price}의 가격 메시지를 결합해 중고가 사용자, 교체 수요 사용자, 브랜드 신뢰를 중시하는 고객에게 "전문 기술 + 합리적 가치" 포지션을 만들 수 있습니다. ${competitors}와 경쟁할 때는 단순 사양 나열보다 사용 장면 기반 가치 증명에 집중하고, 시연 가능하고 비교 가능하며 측정 가능한 방식으로 전환 효율을 높이는 것이 좋습니다.`;
+      }
+
+      const overview = currentLang === "cn" ? [
+        ["分析对象", data.productName],
+        ["品牌/阵营", data.brand],
+        ["品类赛道", data.category],
+        ["当前价格", data.price],
+        ["目标市场", data.market],
+        ["核心竞品", competitors]
+      ] : currentLang === "en" ? [
+        ["Analysis Object", data.productName],
+        ["Brand / Camp", data.brand],
+        ["Category", data.category],
+        ["Current Price", data.price],
+        ["Target Market", data.market],
+        ["Core Competitors", competitors]
+      ] : [
+        ["분석 대상", data.productName],
+        ["브랜드 / 진영", data.brand],
+        ["카테고리", data.category],
+        ["현재 가격", data.price],
+        ["목표 시장", data.market],
+        ["핵심 경쟁사", competitors]
+      ];
+      $("overviewTable").innerHTML = overview.map(r => `<tr><th>${escapeHtml(r[0])}</th><td>${escapeHtml(r[1])}</td></tr>`).join("");
+
+      const trends = currentLang === "cn" ? [
+        `${data.category}进入“功能参数竞争”向“体验价值竞争”切换阶段，用户更关注实际场景收益。`,
+        `AI与智能化能力成为新品沟通的高频关键词，但必须转译成用户能理解的利益点。`,
+        `中端价格带竞争加剧，品牌需要通过可信技术、服务承诺和渠道效率形成差异化。`,
+        `线上内容、直播演示和门店体验对转化影响上升，适合把核心卖点做成可视化对比。`,
+        `用户决策更依赖口碑、评测和价格锚点，专业报告应同时覆盖事实数据与购买理由。`
+      ] : currentLang === "en" ? [
+        `${data.category} is shifting from feature-spec competition to experience-value competition, and users care more about benefits in real scenarios.`,
+        `AI and smart capabilities are frequent launch keywords, but they must be translated into benefits users can understand.`,
+        `Mid-range price-band competition is intensifying, so brands need differentiation through credible technology, service promises and channel efficiency.`,
+        `Online content, livestream demos and store experience have greater impact on conversion, making visible comparison material important.`,
+        `User decisions rely more on reputation, reviews and price anchors, so a professional report should combine facts with reasons to buy.`
+      ] : [
+        `${data.category}는 기능 사양 경쟁에서 경험 가치 경쟁으로 이동하고 있으며, 사용자는 실제 사용 장면의 이익을 더 중요하게 봅니다.`,
+        `AI와 스마트 역량은 신제품 커뮤니케이션의 핵심 키워드지만, 사용자가 이해할 수 있는 혜택으로 번역되어야 합니다.`,
+        `중가 가격대 경쟁이 심화되면서 브랜드는 신뢰 가능한 기술, 서비스 약속, 채널 효율로 차별화해야 합니다.`,
+        `온라인 콘텐츠, 라이브 시연, 매장 경험의 전환 영향이 커지고 있어 핵심 소구점의 시각적 비교가 중요합니다.`,
+        `사용자 의사결정은 평판, 리뷰, 가격 기준점에 더 의존하므로 전문 보고서는 사실 데이터와 구매 이유를 함께 다뤄야 합니다.`
+      ];
+      $("trendList").innerHTML = trends.map(t => `<li>${escapeHtml(t)}</li>`).join("");
+
+      const drivers = profile.drivers;
+      $("driverBars").innerHTML = drivers.map(d => `<div class="bar-row"><span>${d[0]}</span><div class="bar-track"><div class="bar-fill" style="width:${d[1]}%"></div></div><span>${d[1]}</span></div>`).join("");
+      $("researchNote").textContent = data.research
+        ? (currentLang === "cn" ? `已吸收用户粘贴的检索资料：${data.research.slice(0, 180)}${data.research.length > 180 ? "..." : ""}` : currentLang === "en" ? `Included pasted research material: ${data.research.slice(0, 180)}${data.research.length > 180 ? "..." : ""}` : `붙여넣은 리서치 자료 반영: ${data.research.slice(0, 180)}${data.research.length > 180 ? "..." : ""}`)
+        : (currentLang === "cn" ? "建议通过左侧联网检索入口补充市场规模、份额、竞品价格和用户评价等事实数据。" : currentLang === "en" ? "Use the web research shortcuts on the left to add facts such as market size, share, competitor prices and user reviews." : "왼쪽 웹 리서치 바로가기를 통해 시장 규모, 점유율, 경쟁 가격, 사용자 리뷰 등 사실 데이터를 보강하는 것이 좋습니다.");
+
+      $("featureTable").innerHTML = data.features.map(f => {
+        const [value, conversion] = pack().featureValue(f);
+        return `<tr><td><b>${escapeHtml(f)}</b></td><td>${escapeHtml(value)}</td><td>${escapeHtml(conversion)}</td></tr>`;
+      }).join("");
+
+      const competition = isStyler && currentLang === "cn" ? [
+        ["高端衣物护理品牌", data.competitors.slice(0, 3).join(pack().delimiter) || "三星、海尔等", "蒸汽护理、除味除菌、家居高端化心智", "用双重蒸汽、热泵烘干和镜面设计建立高端护理差异"],
+        ["传统洗烘设备", "洗烘套装 / 烘干机品牌", "容量大、刚需明确、价格带覆盖广", "强调免洗护理、抚皱塑形和精致衣物日常维护"],
+        ["干洗/到家护理服务", "线下干洗店、到家洗护平台", "专业护理、无需购买设备", "突出随时可用、长期成本可控和家庭私密便利"],
+        ["小型护理设备", "挂烫机、除螨/除味设备", "价格低、体积小、购买门槛低", "强化一体化护理能力和高端家居场景价值"]
+      ] : isStyler && currentLang === "en" ? [
+        ["Premium clothing-care brands", data.competitors.slice(0, 3).join(pack().delimiter) || "Samsung, Haier, etc.", "Steam care, odor and hygiene removal, premium home-appliance mindset", "Differentiate through dual steam, heat-pump drying and mirror-finish design"],
+        ["Traditional laundry and drying systems", "Washer-dryer sets / dryer brands", "Large capacity, clear need and wide price coverage", "Emphasize refresh-without-washing, wrinkle reduction and daily care for delicate garments"],
+        ["Dry-cleaning and home-care services", "Offline dry cleaners and home laundry platforms", "Professional care without device ownership", "Highlight anytime availability, controllable long-term cost and home convenience"],
+        ["Small care devices", "Garment steamers and odor-removal devices", "Low price, compact size and low entry barrier", "Strengthen integrated care capability and premium home scenario value"]
+      ] : isStyler ? [
+        ["프리미엄 의류 관리 브랜드", data.competitors.slice(0, 3).join(pack().delimiter) || "삼성, 하이얼 등", "스팀 케어, 탈취/위생 관리, 고급 홈가전 인식", "듀얼 스팀, 히트펌프 건조, 미러 디자인으로 고급 관리 차별화"],
+        ["전통 세탁/건조 기기", "세탁건조 세트 / 건조기 브랜드", "대용량, 명확한 수요, 넓은 가격대", "세탁 없이 관리, 구김 완화, 섬세한 의류 일상 케어 강조"],
+        ["드라이클리닝/방문 케어 서비스", "오프라인 세탁소, 방문 세탁 플랫폼", "전문 관리와 기기 구매 부담 없음", "언제든 사용 가능, 장기 비용 통제, 가정 내 편의성 강조"],
+        ["소형 케어 기기", "스팀다리미, 탈취 기기", "저렴한 가격, 작은 크기, 낮은 구매 장벽", "통합 의류 관리 역량과 프리미엄 홈 시나리오 가치 강화"]
+      ] : currentLang === "cn" ? [
+        ["本土头部品牌", data.competitors.slice(0, 3).join(pack().delimiter) || "本土品牌", "供应链、渠道覆盖、价格响应速度", "用技术可信度和品牌质感避开纯价格战"],
+        ["国际高端品牌", data.competitors.slice(3).join(pack().delimiter) || "国际品牌", "高端心智、显示技术、品牌溢价", "用更清晰的价值证明承接升级用户"],
+        ["互联网/生态品牌", "小米、华为等", "生态联动、内容入口、年轻用户触达", "强化核心体验和长期系统服务承诺"],
+        ["低价白牌/区域品牌", "区域性价格型品牌", "低价、快速促销", "强调质量、售后和长期使用稳定性"]
+      ] : currentLang === "en" ? [
+        ["Local leaders", data.competitors.slice(0, 3).join(pack().delimiter) || "Local brands", "Supply chain, channel coverage and price response speed", "Avoid pure price wars with credible technology and brand quality"],
+        ["International premium brands", data.competitors.slice(3).join(pack().delimiter) || "International brands", "Premium mindset, display technology and brand premium", "Win upgrade users with clearer value proof"],
+        ["Internet / ecosystem brands", "Xiaomi, Huawei, etc.", "Ecosystem linkage, content entry points and younger-user reach", "Strengthen core experience and long-term system-service promises"],
+        ["Low-price regional brands", "Regional price-driven brands", "Low price and fast promotions", "Emphasize quality, after-sales and long-term stability"]
+      ] : [
+        ["현지 선도 브랜드", data.competitors.slice(0, 3).join(pack().delimiter) || "현지 브랜드", "공급망, 채널 커버리지, 가격 대응 속도", "기술 신뢰도와 브랜드 품질감으로 단순 가격전을 피함"],
+        ["글로벌 프리미엄 브랜드", data.competitors.slice(3).join(pack().delimiter) || "글로벌 브랜드", "프리미엄 인식, 디스플레이 기술, 브랜드 프리미엄", "더 명확한 가치 증명으로 업그레이드 사용자를 흡수"],
+        ["인터넷 / 생태계 브랜드", "샤오미, 화웨이 등", "생태계 연동, 콘텐츠 접점, 젊은 사용자 도달", "핵심 경험과 장기 시스템 서비스 약속 강화"],
+        ["저가 지역 브랜드", "지역 가격형 브랜드", "저가와 빠른 프로모션", "품질, A/S, 장기 사용 안정성 강조"]
+      ];
+      $("competitionTable").innerHTML = competition.map(r => `<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td><td>${escapeHtml(r[3])}</td></tr>`).join("");
+
+      const swot = currentLang === "cn" ? [
+        ["优势 Strengths", "s", [`${data.brand}品牌背书提升信任`, `${featureText || "核心功能"}形成明确卖点`, `${data.price}具备价格锚点和促销吸引力`, "适合通过体验演示放大产品价值"]],
+        ["劣势 Weaknesses", "w", ["若只讲参数，用户感知可能不足", "本土生态/渠道声量可能弱于头部竞品", "需要补充权威数据支撑市场说服力", "价格优惠若缺乏理由，容易被理解为清库存"]],
+        ["机会 Opportunities", "o", [`${data.category}智能化升级创造换新理由`, "直播/短视频能低成本放大体验差异", "中端价位用户需要高性价比国际品牌选择", "企业内部可将报告用于销售培训和新品立项"]],
+        ["威胁 Threats", "t", [`${competitors}持续加码导致价格战`, "同质化AI话术削弱差异化", "消费者评价和评测内容会快速影响转化", "行业需求波动可能拉长决策周期"]]
+      ] : currentLang === "en" ? [
+        ["Strengths", "s", [`${data.brand} brand endorsement improves trust`, `${featureText || "Core capabilities"} creates clear selling points`, `${data.price} provides a price anchor and promotion appeal`, "Suitable for amplifying product value through experience demos"]],
+        ["Weaknesses", "w", ["If communication only lists specs, user perception may remain weak", "Local ecosystem and channel buzz may trail leading competitors", "Authoritative data is needed to strengthen market persuasiveness", "Discounts without clear reasons may be read as inventory clearance"]],
+        ["Opportunities", "o", [`Smart upgrades in ${data.category} create replacement reasons`, "Livestream and short video can amplify experience differences at low cost", "Mid-range users need value-for-money international brand options", "Internal teams can use the report for sales training and product planning"]],
+        ["Threats", "t", [`${competitors} may continue to intensify price wars`, "Homogeneous AI messaging can weaken differentiation", "Consumer reviews and evaluation content can quickly affect conversion", "Demand volatility may lengthen decision cycles"]]
+      ] : [
+        ["강점 Strengths", "s", [`${data.brand} 브랜드 신뢰가 구매 신뢰를 높임`, `${featureText || "핵심 기능"}이 명확한 소구점을 형성`, `${data.price}가 가격 기준점과 프로모션 매력을 제공`, "경험 시연을 통해 제품 가치를 확대하기 적합"]],
+        ["약점 Weaknesses", "w", ["사양만 말하면 사용자 체감이 약할 수 있음", "현지 생태계/채널 화제성이 선도 경쟁사보다 약할 수 있음", "시장 설득력을 위해 권위 있는 데이터 보강 필요", "명확한 이유 없는 가격 혜택은 재고 처리로 인식될 위험"]],
+        ["기회 Opportunities", "o", [`${data.category}의 스마트 업그레이드가 교체 이유를 만듦`, "라이브/숏폼은 낮은 비용으로 경험 차이를 확대 가능", "중가 사용자는 가성비 좋은 글로벌 브랜드 선택지를 원함", "내부적으로 영업 교육과 신제품 기획에 보고서 활용 가능"]],
+        ["위협 Threats", "t", [`${competitors}의 지속 강화가 가격전을 유발할 수 있음`, "동질적인 AI 메시지가 차별화를 약화", "소비자 리뷰와 평가 콘텐츠가 전환에 빠르게 영향", "수요 변동이 의사결정 주기를 늘릴 수 있음"]]
+      ];
+      $("swotGrid").innerHTML = swot.map(card => `<div class="swot-card ${card[1]}"><strong>${card[0]}</strong><ul>${card[2].map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul></div>`).join("");
+
+      const personas = isStyler && currentLang === "cn" ? [
+        ["精致通勤用户", "西装、衬衫、外套需要快速除皱除味", `强调${featureText || "蒸汽护理"}带来的每日衣物状态管理`],
+        ["品质家庭用户", "关注家人衣物卫生、护理便利和家居美观", `突出${data.brand}品牌、镜面黑外观和5件衣服+1裤子的容量适配`],
+        ["高端衣物用户", "羊毛、真丝、外套等不适合频繁水洗", "用免洗护理、低温热泵烘干和塑形维护解释长期衣物保护价值"],
+        ["服务替代用户", "希望减少干洗频次和外出护理成本", "对比干洗时间、费用和隐私便利，强调家庭随时护理"]
+      ] : currentLang === "cn" ? [
+        ["理性换新用户", "希望价格合理、质量稳定、功能不过时", `强调${data.price}价格锚点、长期升级和核心功能价值`],
+        ["品质升级用户", "愿意为品牌、画质/性能和体验付费", `突出${data.brand}技术积累与旗舰体验下放`],
+        ["家庭决策用户", "关注全家使用便利性、售后和耐用", "用场景语言说明老人、小孩、影音娱乐的实际收益"],
+        ["促销敏感用户", "关注限时折扣和同价位对比", "提供竞品对比表和限时权益，降低犹豫成本"]
+      ] : currentLang === "en" ? [
+        ["Rational replacement user", "Wants fair price, stable quality and features that will not age quickly", `Emphasize the ${data.price} price anchor, long-term upgrades and core capability value`],
+        ["Quality upgrader", "Willing to pay for brand, picture/performance and experience", `Highlight ${data.brand}'s technical base and accessible flagship experience`],
+        ["Family decision-maker", "Cares about whole-family convenience, service and durability", "Use scenario language to explain benefits for seniors, children and entertainment"],
+        ["Promotion-sensitive buyer", "Cares about limited-time deals and same-price comparisons", "Provide competitor comparison and limited benefits to reduce hesitation"]
+      ] : [
+        ["합리적 교체 사용자", "합리적 가격, 안정적 품질, 오래가는 기능을 원함", `${data.price} 가격 기준점, 장기 업그레이드, 핵심 기능 가치를 강조`],
+        ["품질 업그레이드 사용자", "브랜드, 화질/성능, 경험에 지불 의향이 있음", `${data.brand}의 기술 축적과 플래그십 경험의 접근성을 강조`],
+        ["가족 의사결정 사용자", "가족 전체 사용 편의, A/S, 내구성을 중시", "어르신, 아이, 영상 엔터테인먼트의 실제 이익을 장면 언어로 설명"],
+        ["프로모션 민감 사용자", "한정 할인과 동일 가격대 비교를 중시", "경쟁 비교표와 한정 혜택으로 망설임 비용을 낮춤"]
+      ];
+      $("personaTable").innerHTML = personas.map(r => `<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td></tr>`).join("");
+
+      const funnels = currentLang === "cn" ? [
+        "认知阶段：用一句话讲清楚产品定位，避免堆砌参数。",
+        "兴趣阶段：用竞品对比和真实场景解释核心卖点。",
+        "评估阶段：补齐价格、售后、评价、权威背书四类证据。",
+        "转化阶段：设置限时权益、套装优惠或门店/直播专属钩子。",
+        "复购阶段：通过系统升级、会员内容和服务提醒延长生命周期。"
+      ] : currentLang === "en" ? [
+        "Awareness: explain the product positioning in one sentence and avoid piling up specifications.",
+        "Interest: use competitor comparison and real scenarios to explain the core selling points.",
+        "Evaluation: complete four proof types: price, after-sales, reviews and authoritative endorsements.",
+        "Conversion: set limited-time benefits, bundles or store/livestream hooks.",
+        "Retention: extend the lifecycle through system upgrades, membership content and service reminders."
+      ] : [
+        "인지 단계: 제품 포지셔닝을 한 문장으로 설명하고 사양 나열을 피합니다.",
+        "관심 단계: 경쟁 비교와 실제 장면으로 핵심 소구점을 설명합니다.",
+        "평가 단계: 가격, A/S, 리뷰, 권위 있는 근거 네 가지 증거를 보강합니다.",
+        "전환 단계: 한정 혜택, 번들, 매장/라이브 전용 후크를 설정합니다.",
+        "재구매 단계: 시스템 업그레이드, 멤버십 콘텐츠, 서비스 알림으로 수명주기를 연장합니다."
+      ];
+      $("funnelList").innerHTML = funnels.map(x => `<li>${escapeHtml(x)}</li>`).join("");
+
+      const actions = isStyler && currentLang === "cn" ? [
+        ["重构产品定位", `将${data.productName}定位为“高端家庭衣物护理中心”，核心不是洗衣替代，而是日常除皱、除味、塑形和精致衣物维护。`],
+        ["制作场景化对比素材", `围绕通勤外套、衬衫、羊毛大衣、裤线塑形等场景，对比${competitors}和传统干洗服务。`],
+        ["强化高端家居表达", `把${featureText || "双重蒸汽护理"}转译为省时、体面、衣物保护和空间美学四类价值，用于详情页和门店演示。`],
+        ["补充购买理由数据", "补充干洗频次、单次护理成本、蒸汽除菌/除味数据、热泵低温烘干优势和用户评价。"],
+        ["建立演示转化闭环", "用现场挂入衣物、护理前后对比、镜面黑家居陈列图和容量演示提升高价产品转化。"]
+      ] : currentLang === "cn" ? [
+        ["重构产品定位", `将${data.productName}定位为“${data.category}智能升级的高性价比选择”，同时保留${data.brand}专业技术背书。`],
+        ["制作竞品对比素材", `围绕价格、核心卖点、用户场景和售后承诺，对比${competitors}，形成一页式销售工具。`],
+        ["强化场景化传播", `把${featureText || "核心卖点"}转译为“用户每天能感知的收益”，用于详情页、直播脚本和门店话术。`],
+        ["补充权威数据", `通过行业报告、平台销量、用户评价和品牌官方资料，补足市场规模、份额和趋势判断。`],
+        ["建立转化闭环", "用搜索热词、详情页点击、咨询问题、成交原因四类数据持续优化卖点排序。"]
+      ] : currentLang === "en" ? [
+        ["Rebuild product positioning", `Position ${data.productName} as a value-for-money smart upgrade choice in ${data.category}, while preserving ${data.brand}'s technical endorsement.`],
+        ["Create competitor comparison material", `Compare ${competitors} around price, core selling points, user scenarios and service promises to form a one-page sales tool.`],
+        ["Strengthen scenario communication", `Translate ${featureText || "core selling points"} into daily user-perceived benefits for detail pages, livestream scripts and store pitches.`],
+        ["Add authoritative data", `Use industry reports, platform sales, user reviews and official brand material to fill market size, share and trend judgments.`],
+        ["Build a conversion loop", "Continuously optimize selling-point priority with search terms, page clicks, consultation questions and purchase reasons."]
+      ] : [
+        ["제품 포지셔닝 재구성", `${data.productName}을 ${data.category}의 스마트 업그레이드형 고가치 선택지로 포지셔닝하고 ${data.brand}의 기술 신뢰를 유지합니다.`],
+        ["경쟁 비교 자료 제작", `가격, 핵심 소구점, 사용자 장면, A/S 약속을 중심으로 ${competitors}와 비교해 한 페이지 영업 도구를 만듭니다.`],
+        ["장면 기반 커뮤니케이션 강화", `${featureText || "핵심 소구점"}을 사용자가 매일 체감하는 이익으로 번역해 상세 페이지, 라이브 스크립트, 매장 화법에 활용합니다.`],
+        ["권위 데이터 보강", `산업 보고서, 플랫폼 판매량, 사용자 리뷰, 브랜드 공식 자료로 시장 규모, 점유율, 트렌드 판단을 보완합니다.`],
+        ["전환 폐쇄 루프 구축", "검색어, 상세 페이지 클릭, 상담 질문, 구매 이유 데이터를 활용해 소구점 우선순위를 지속 최적화합니다."]
+      ];
+      $("actions").innerHTML = actions.map(a => `<div class="action"><div><b>${a[0]}</b><span>${escapeHtml(a[1])}</span></div></div>`).join("");
+
+      $("sourceText").textContent = currentLang === "cn"
+        ? `建议引用来源包括：品牌官网/电商详情页、行业研究机构报告、主流电商平台价格与评价、新闻报道、竞品官方参数页，以及用户粘贴的联网检索资料。当前报告已基于“${data.research ? ui("sourceUserData") : ui("sourceFramework")}”生成初稿。`
+        : currentLang === "en"
+          ? `Recommended sources include the brand website / e-commerce detail pages, industry research reports, mainstream e-commerce prices and reviews, news coverage, official competitor specification pages and pasted web research. This draft is based on "${data.research ? ui("sourceUserData") : ui("sourceFramework")}".`
+          : `추천 출처는 브랜드 공식 사이트/이커머스 상세 페이지, 산업 리서치 보고서, 주요 이커머스 가격과 리뷰, 뉴스 보도, 경쟁사 공식 사양 페이지, 사용자가 붙여넣은 웹 리서치 자료입니다. 현재 초안은 "${data.research ? ui("sourceUserData") : ui("sourceFramework")}"을 기반으로 생성되었습니다.`;
+    }
+
+    async function copyReport() {
+      const text = $("reportRoot").innerText.replace(/\n{3,}/g, "\n\n");
+      await navigator.clipboard.writeText(text);
+      showToast(ui("copyToast"));
+    }
+
+    function resetNano80() {
+      Object.entries(defaultsFor()).forEach(([k, v]) => $(k).value = v);
+      updateAutoPreview();
+      $("analyzeHint").textContent = ui("recognized");
+      generateReport();
+    }
+
+    $("productName").addEventListener("input", scheduleAutoAnalysis);
+
+    // Advanced fields manually changed → regenerate on blur
+    ["brand", "category", "price", "market", "features", "competitors", "research", "purpose"].forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("change", () => { generateReport(); });
+    });
+
+    $("research").addEventListener("input", () => { generateReport(); });
+
+    loadApiConfig();
+    setLang(localStorage.getItem("marketReportLang") || "cn");
+    updateAutoPreview();
+    $("analyzeHint").textContent = ui("recognized");
+  </script>
+</body>
+</html>
