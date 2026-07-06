@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>邮件润色 Agent</title>
+  <style>
+    :root {
+      --lg-red: #a50034;
+      --lg-red-dark: #7d0028;
+      --ink: #222222;
+      --muted: #666666;
+      --line: #e8e2e4;
+      --paper: #ffffff;
+      --soft: #faf7f8;
+      --soft-red: #fff1f5;
+      --green: #1f7a4d;
+      --shadow: 0 18px 45px rgba(80, 20, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(135deg, #fffafa 0%, #f7f2f4 45%, #ffffff 100%);
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 20px 0 44px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      align-items: stretch;
+      margin-bottom: 14px;
+    }
+
+    .hero-card,
+    .panel,
+    .result-card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(165, 0, 52, 0.12);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      right: -78px;
+      top: -70px;
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      background: rgba(165, 0, 52, 0.08);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      color: var(--lg-red);
+      background: var(--soft-red);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      align-self: flex-start;
+      margin-left: 52px;
+    }
+
+    .hero-logo {
+      position: absolute;
+      top: 14px;
+      left: 20px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #ffffff;
+      z-index: 2;
+    }
+
+    h1 {
+      margin: 12px 0 8px;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.12;
+      letter-spacing: -1.2px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 720px;
+    }
+
+    .example-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: linear-gradient(160deg, #ffffff, #fff6f8);
+    }
+
+    .example-card h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .bad-example,
+    .good-example {
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .bad-example {
+      background: #f7f7f7;
+      color: #555555;
+      border: 1px dashed #d8d8d8;
+    }
+
+    .good-example {
+      background: #fff1f5;
+      color: #5d001e;
+      border: 1px solid rgba(165, 0, 52, 0.15);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 22px;
+      position: sticky;
+      top: 18px;
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .panel-title h2,
+    .result-section h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      outline: none;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: inherit;
+      transition: 0.2s ease;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+      border-color: rgba(165, 0, 52, 0.5);
+      box-shadow: 0 0 0 4px rgba(165, 0, 52, 0.08);
+    }
+
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      padding: 16px;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    label {
+      display: block;
+      color: #3f3035;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    input,
+    select {
+      height: 46px;
+      padding: 0 13px;
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .primary {
+      color: #ffffff;
+      background: var(--lg-red);
+      box-shadow: 0 12px 22px rgba(165, 0, 52, 0.22);
+    }
+
+    .primary:hover {
+      background: var(--lg-red-dark);
+      transform: translateY(-1px);
+    }
+
+    .secondary {
+      color: var(--lg-red);
+      background: var(--soft-red);
+    }
+
+    .secondary:hover {
+      background: #ffe4ec;
+    }
+
+    .ghost {
+      color: #555555;
+      background: #f3f1f2;
+    }
+
+    .result-section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+
+    .result-header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .result-card {
+      padding: 20px;
+      border-radius: 22px;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: rise 0.35s ease forwards;
+    }
+
+    @keyframes rise {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--soft-red);
+      color: var(--lg-red);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .copy-btn {
+      padding: 9px 12px;
+      border-radius: 12px;
+      color: #ffffff;
+      background: #333333;
+      font-size: 12px;
+    }
+
+    .copy-btn.done {
+      background: var(--green);
+    }
+
+    .mail-body {
+      white-space: pre-wrap;
+      font-size: 15px;
+      line-height: 1.85;
+      color: #2b2527;
+      background: var(--soft);
+      border: 1px solid #eee7e9;
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .quality-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .quality-item {
+      padding: 11px;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      color: #5b5355;
+    }
+
+    .quality-item strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 3px;
+    }
+
+    .empty {
+      min-height: 420px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed #dacfd3;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.65);
+      padding: 28px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      padding: 13px 16px;
+      color: #ffffff;
+      background: #222222;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: 0.2s ease;
+      z-index: 10;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .powered-badge {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px 5px 8px;
+      border-radius: 999px;
+      background: #a50034;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 12px rgba(165, 0, 52, 0.3);
+      user-select: none;
+      cursor: default;
+    }
+
+    .powered-badge img {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #ffffff;
+    }
+
+    .top-logo {
+      display: none;
+    }
+
+    .api-config {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .api-config-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--soft);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .api-config-header span {
+      font-size: 13px;
+      font-weight: 700;
+      color: #3f3035;
+    }
+
+    .api-config-header .arrow {
+      font-size: 12px;
+      color: var(--muted);
+      transition: transform 0.2s ease;
+    }
+
+    .api-config-header.open .arrow {
+      transform: rotate(180deg);
+    }
+
+    .api-config-body {
+      display: none;
+      padding: 14px 16px;
+      gap: 10px;
+      flex-direction: column;
+    }
+
+    .api-config-body.open {
+      display: flex;
+    }
+
+    .api-config-body input {
+      height: 42px;
+      font-size: 13px;
+    }
+
+    .api-config-body .hint-row {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      place-items: center;
+      text-align: center;
+    }
+
+    .loading-overlay.show {
+      display: grid;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--line);
+      border-top-color: var(--lg-red);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 920px) {
+      .hero,
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .app {
+        width: min(100% - 24px, 1180px);
+        padding-top: 18px;
+      }
+
+      .hero-card,
+      .panel,
+      .example-card,
+      .result-card {
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      .hero-logo {
+        width: 50px;
+        height: 50px;
+        top: 16px;
+        left: 18px;
+      }
+
+      .eyebrow {
+        margin-left: 62px;
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      .form-grid,
+      .quality-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="powered-badge">Powered by BI Team</div>
+  <main class="app">
+    <section class="hero">
+      <div class="hero-card">
+        <img src="bi-team-logo.png" alt="BI Team Logo" class="hero-logo" />
+        <span class="eyebrow">Email Polish Agent · 商务邮件润色</span>
+        <h1>"太直"的话，别急着发</h1>
+        <p class="subtitle">✅ 稳妥汇报｜✅ 委婉争取｜✅ 推进落地｜✅ 简洁专业<br><br>输入你原本想写的内容，选择对象和语气，系统会生成 4 个备选版本：稳妥汇报、委婉争取、推进落地、简洁专业。适合给领导、同事、合作方发邮件前快速润色。</p>
+      </div>
+      <div class="example-card">
+        <h2>示例转换</h2>
+        <div class="bad-example">原话：领导，你说的这个我有考虑，但是没有钱没有精力，让我怎么做？</div>
+        <div class="good-example">优化：关于您提到的方向，我已初步评估过可行性。当前主要限制在预算和人力资源上，如需继续推进，建议先明确优先级，并同步确认可投入的资源范围，我再据此细化执行方案。</div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="panel">
+        <div class="panel-title">
+          <h2>输入原始邮件</h2>
+          <span class="hint" id="counter">0 字</span>
+        </div>
+        <textarea id="rawText" placeholder="把你想说的话直接粘贴在这里。例如：领导，你说的这个我有考虑但是没有钱没有精力让我怎么做……"></textarea>
+
+        <div class="form-grid">
+          <div>
+            <label for="receiver">收件对象</label>
+            <select id="receiver">
+              <option value="领导">领导 / 上级</option>
+              <option value="同事">同事 / 跨部门</option>
+              <option value="合作方">客户 / 合作方</option>
+              <option value="团队">团队 / 下属</option>
+            </select>
+          </div>
+          <div>
+            <label for="tone">期望语气</label>
+            <select id="tone">
+              <option value="稳妥专业">稳妥专业</option>
+              <option value="委婉但明确">委婉但明确</option>
+              <option value="积极争取资源">积极争取资源</option>
+              <option value="简洁直接">简洁直接</option>
+            </select>
+          </div>
+          <div>
+            <label for="topic">邮件主题，可选</label>
+            <input id="topic" placeholder="例如：关于项目推进资源评估" />
+          </div>
+          <div>
+            <label for="signature">署名，可选</label>
+            <input id="signature" placeholder="例如：John" />
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button class="primary" onclick="generateMails()">生成 4 个备选文案</button>
+          <button class="secondary" onclick="loadSample()">填入示例</button>
+          <button class="ghost" onclick="clearAll()">清空</button>
+        </div>
+
+        <div class="api-config" id="apiConfig">
+          <div class="api-config-header" id="apiConfigHeader" onclick="toggleApiConfig()">
+            <span>AI API 配置（可选）</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="api-config-body" id="apiConfigBody">
+            <div class="hint-row">配置 API 后，系统会调用 AI 根据你的实际输入内容智能生成邮件。支持 OpenAI / DeepSeek / 通义千问等兼容接口。</div>
+            <input id="apiBase" placeholder="API Base URL，如 https://api.openai.com/v1" value="" />
+            <input id="apiKey" type="password" placeholder="API Key" value="" />
+            <input id="apiModel" placeholder="模型名称，如 gpt-4o-mini / deepseek-chat" value="gpt-4o-mini" />
+          </div>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <div class="result-header">
+          <div>
+            <h2>可发送备选</h2>
+            <p>优先选择 1 或 2；如果需要推动资源，选 3；如果关系熟悉，选 4。</p>
+          </div>
+        </div>
+        <div id="results" class="empty">输入邮件正文后，点击生成。这里会出现 4 个可复制版本。</div>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast">已复制</div>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div>
+      <div class="spinner"></div>
+      <p style="color: var(--muted); font-size: 14px; margin: 0;">AI 正在润色中，请稍候…</p>
+    </div>
+  </div>
+
+  <script>
+    const rawText = document.getElementById("rawText");
+    const counter = document.getElementById("counter");
+    const results = document.getElementById("results");
+    const toast = document.getElementById("toast");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+
+    rawText.addEventListener("input", () => {
+      counter.textContent = `${rawText.value.trim().length} 字`;
+    });
+
+    function toggleApiConfig() {
+      const header = document.getElementById("apiConfigHeader");
+      const body = document.getElementById("apiConfigBody");
+      header.classList.toggle("open");
+      body.classList.toggle("open");
+    }
+
+    function showLoading(show) {
+      if (show) loadingOverlay.classList.add("show");
+      else loadingOverlay.classList.remove("show");
+    }
+
+    function subjectLine(topic) {
+      return topic ? `主题：${topic}\n\n` : "";
+    }
+
+    function signOff(signature) {
+      return signature ? `\n\n谢谢。\n${signature}` : "\n\n谢谢。";
+    }
+
+    function buildFallbackVariants(input, receiver, tone, topic, signature) {
+      const subject = subjectLine(topic);
+      const end = signOff(signature);
+      const hello = receiver === "领导" ? "领导您好，" : receiver === "合作方" ? "您好，" : "您好，";
+
+      // 第一步：对原始输入做礼貌化润色
+      let polished = input
+        .replace(/领导[，,\s]*/g, "")
+        .replace(/你说的/g, "您提到的")
+        .replace(/你怎么/g, "您怎么")
+        .replace(/你/g, "您")
+        .replace(/我(觉得|认为)/g, "初步判断")
+        .replace(/没有钱/g, "预算资源暂未明确")
+        .replace(/没钱/g, "预算资源暂未明确")
+        .replace(/没有精力/g, "当前人力和时间投入有限")
+        .replace(/没精力/g, "当前人力和时间投入有限")
+        .replace(/让我怎么做/g, "需要进一步明确推进条件")
+        .replace(/怎么做/g, "如何推进")
+        .replace(/不可能/g, "存在较大推进难度")
+        .replace(/做不了/g, "当前条件下较难直接落地")
+        .replace(/太难/g, "推进难度较高")
+        .replace(/不行/g, "当前方案仍需进一步评估")
+        .replace(/没办法/g, "需要补充必要条件后再推进")
+        .replace(/快点/g, "尽快")
+        .replace(/赶紧/g, "尽快")
+        .replace(/弄一下/g, "处理一下")
+        .replace(/搞一下/g, "推进一下")
+        .replace(/随便搞/g, "按标准推进")
+        .replace(/差不多/g, "确保质量达标")
+        .replace(/算了/g, "再评估一下")
+        .replace(/我不想/g, "建议再考虑一下")
+        .replace(/我不要/g, "建议暂不")
+        .replace(/凭什么/g, "建议先确认")
+        .replace(/为啥/g, "原因是")
+        .replace(/为什么/g, "原因是")
+        .replace(/呢[？?]/g, "，请确认。")
+        .replace(/吧[。\.]/g, "。")
+        .replace(/啊[。\.]/g, "。")
+        .replace(/呀[。\.]/g, "。")
+        .trim();
+
+      if (!polished) polished = "相关事项我已做过初步评估，当前需要进一步明确目标、优先级和资源投入后，再细化后续执行方案。";
+      if (!polished.endsWith("。") && !polished.endsWith("！") && !polished.endsWith("？")) polished += "。";
+
+      // 提取关键标签
+      const hasResource = /预算|钱|人力|精力|资源|成本|费用|钱不够|缺人|人手不足/.test(input);
+      const hasUrgent = /快|急|赶|催|马上|立刻|立即| deadline|截止/.test(input);
+      const hasQuestion = /[？?]|怎么|为什么|什么|多少|如何|能不能|可以吗/.test(input);
+      const hasPushback = /不|没|难|不行|没办法|做不了|拒绝|不想|不要/.test(input);
+      const hasMeeting = /开会|会议|约时间|见面|聊一下|讨论/.test(input);
+      const hasRequest = /帮忙|帮|请|希望|想要|需要.*支持/.test(input);
+      const hasFeedback = /反馈|意见|评价|建议|修改|改动/.test(input);
+      const hasReport = /汇报|报告|进度|进展|更新|状态/.test(input);
+      const isShort = input.length < 30;
+
+      // 提取核心话题
+      let topicDesc = "";
+      if (hasResource) topicDesc = "资源相关";
+      else if (hasUrgent) topicDesc = "时间紧急";
+      else if (hasQuestion) topicDesc = "疑问咨询";
+      else if (hasPushback) topicDesc = "困难说明";
+      else if (hasMeeting) topicDesc = "会议沟通";
+      else if (hasRequest) topicDesc = "请求协助";
+      else if (hasFeedback) topicDesc = "反馈建议";
+      else if (hasReport) topicDesc = "进度汇报";
+      else topicDesc = "事项沟通";
+
+      // 辅助函数：为不同版本生成差异化的上下文
+      function ctx1() {
+        if (isShort) return "关于您提到的事项，我已经了解并做了初步评估。";
+        return "关于您提到的事项，我已经仔细阅读并做了初步梳理。";
+      }
+      function ctx2() {
+        if (isShort) return "您提到的事项我理解，也做了初步判断。";
+        return "您提到的方向我理解，也认真思考了一下。";
+      }
+      function ctx3() {
+        if (isShort) return "收到，关于该事项，以下是我的初步想法。";
+        return "收到，关于该事项，我做了以下梳理和思考。";
+      }
+      function ctx4() {
+        return "";
+      }
+
+      // 辅助函数：为不同版本生成后续行动建议
+      function follow1() {
+        if (hasResource) return "为确保后续推进更有把握，建议先明确该事项的优先级、目标边界以及可投入资源范围。如果方向确认需要继续推进，我可以基于现有条件进一步梳理可执行方案，并同步列出所需支持与关键风险点，供您判断。";
+        if (hasUrgent) return "考虑到时间要求，我建议我们先明确以下两点：一是该事项的最终截止时间及关键里程碑；二是当前可调配的人力和资源情况。我会根据确认后的优先级和时间安排，尽快梳理可执行方案。";
+        if (hasQuestion) return "为确保回复更准确，建议进一步明确问题的背景和目标，我可以据此提供更详细的分析和建议。如果您方便的话，也可以补充一些具体场景，我会尽快整理完整的回复。";
+        if (hasMeeting) return "关于时间安排，建议先确认您的空闲时段和会议时长需求，我可以据此协调相关人员的日程，并提前准备会议材料。";
+        if (hasRequest) return "为确保后续配合更顺畅，建议先明确需求的优先级、预期目标和关键时间节点，我可以据此评估可调配的资源和支持，并尽快给您反馈。";
+        if (hasFeedback) return "为确保理解准确，建议进一步明确需要调整的方向和优先级，我可以据此评估改动范围、所需时间以及对其他任务的影响，尽快给您反馈。";
+        if (hasReport) return "后续我会持续跟进并及时同步最新进展，如有需要调整的方向或重点，也请随时告知。";
+        return "为确保后续推进更有把握，建议先明确该事项的背景、目标和关键约束条件。如果方向确认需要继续推进，我可以基于现有信息进一步梳理可执行方案，并同步列出所需支持与关键风险点，供您判断。";
+      }
+
+      function follow2() {
+        if (hasResource) return "结合目前掌握的情况，我初步判断该事项并非不能推进，但需要补充一定资源后，执行效果才会更可控。建议我们先确认本事项的优先级，并评估是否可以在资源方面给予相应支持。我会根据确认后的条件，尽快整理具体推进路径。";
+        if (hasUrgent) return "结合目前掌握的情况，我初步判断需要协调一些前置条件后才能保障按时交付。当前主要顾虑在于：如果按现有节奏直接推进，可能会在质量或依赖项上出现不可控风险。建议我们先对齐一下优先级和可调配资源。";
+        if (hasQuestion) return "目前我对部分细节还需要进一步确认，以便给出更精准的建议。建议我们先对齐一下问题的核心诉求，我会据此整理一份更完整的回复供您参考。";
+        if (hasMeeting) return "考虑到近期日程安排较满，建议先确认该会议的优先级和必须参与的人员范围，我可以据此协调一个各方都方便的时间。";
+        if (hasRequest) return "目前的顾虑主要是现有条件下直接响应可能会在交付质量或进度上出现压力。建议我们先确认一下是否有可调整的空间，比如优先级、资源配置或时间节点，我会根据调整后的条件重新评估可行性。";
+        if (hasFeedback) return "目前的顾虑主要是改动范围和时间安排需要进一步确认。建议我们先对齐一下优先级和预期效果，我会据此评估可行性和对现有计划的影响。";
+        if (hasReport) return "从当前情况看，整体进展符合预期，但在部分环节仍有优化空间。建议我们定期同步，确保目标一致并及时调整方向。";
+        return "为确保执行效果，建议我们先对齐一下具体需求和预期，我会据此整理更详细的推进路径和所需支持。";
+      }
+
+      function follow3() {
+        if (hasResource) return `基于目前情况，${polished}如果希望保障推进质量，建议优先明确以下三点：一是该事项在当前工作中的优先级；二是可投入的资源范围；三是内部可协调的配套条件。在以上条件明确后，我可以进一步输出简版执行方案。`;
+        if (hasUrgent) return `基于目前情况，${polished}为保障按时交付，建议优先明确：一是最终截止时间和关键验收节点；二是当前可调配的人力和资源；三是是否存在可以并行或简化的环节。在以上信息明确后，我可以进一步输出带时间线的执行方案。`;
+        if (hasQuestion) return `为给出更准确的方案，建议明确以下信息：一是问题的具体场景和约束条件；二是期望的解决方向或优先级；三是是否有可参考的标准或先例。在以上信息补充后，我可以进一步输出更详细的分析和执行建议。`;
+        if (hasMeeting) return `关于会议安排，建议优先确认以下三点：一是会议的核心议题和预期产出；二是必须参与的参会人员；三是理想的会议时长。我可以据此协调时间并准备议程。`;
+        if (hasRequest) return `如确需推进，建议先明确以下信息：一是需求的具体范围和验收标准；二是期望的交付时间和优先级；三是是否有可参考的类似案例或标准。在以上信息对齐后，我可以进一步输出可落地的执行计划。`;
+        if (hasFeedback) return `为给出更准确的评估，建议明确以下信息：一是需要调整的具体内容和预期效果；二是期望的完成时间；三是是否涉及其他模块或人员的配合。在以上信息明确后，我可以进一步输出改动方案和时间评估。`;
+        if (hasReport) return `基于目前情况，${polished}后续建议明确以下三点：一是接下来的关键里程碑和时间节点；二是需要您协调确认的事项；三是潜在风险和应对预案。我会据此持续跟进并及时同步进展。`;
+        return `收到，关于该事项我建议按以下思路推进。${polished}为保障落地质量，建议优先明确：一是具体目标和验收标准；二是可调配的资源和支持；三是关键时间节点和潜在风险。在以上信息对齐后，我可以进一步输出简版执行方案。`;
+      }
+
+      function follow4() {
+        if (hasResource) return "建议先确认该事项的优先级及可投入资源范围。我可以在条件明确后，进一步整理可执行方案和所需支持。";
+        if (hasUrgent) return "建议先对齐优先级和可调配资源，我可以据此快速输出可执行方案。";
+        if (hasQuestion) return "如方便请补充一些具体背景，我可以据此快速给出更精准的建议。";
+        if (hasMeeting) return "建议先确认会议议题和参会人员，我可以据此协调时间并准备材料。";
+        if (hasRequest) return "建议先对齐需求范围和优先级，我可以据此评估可行方案。";
+        if (hasFeedback) return "建议先对齐改动范围和优先级，我可以据此评估可行方案。";
+        if (hasReport) return "建议定期同步进展，如有调整方向请随时告知。";
+        return "建议先对齐目标和资源，我可以据此快速整理可执行方案。";
+      }
+
+      // 构建4个版本，每个版本都基于用户的核心输入，但用不同的表达方式
+      const v1 = `${ctx1()}${polished}\n\n${follow1()}`;
+      const v2 = `${ctx2()}${polished}\n\n${follow2()}`;
+      const v3 = `${ctx3()}${follow3()}`;
+      const v4 = `${polished}${follow4()}`;
+
+      return [
+        { title: "1｜稳妥汇报版", desc: "态度最稳，适合发给领导。", body: `${subject}${hello}\n\n${v1}${end}` },
+        { title: "2｜委婉争取版", desc: "表达困难但不抱怨，适合争取理解。", body: `${subject}${hello}\n\n${v2}${end}` },
+        { title: "3｜推进落地版", desc: "不只说困难，还给下一步。", body: `${subject}${hello}\n\n${v3}${end}` },
+        { title: "4｜简洁专业版", desc: "短邮件版本，适合关系熟悉或快节奏沟通。", body: `${subject}${hello}\n\n${v4}${end}` }
+      ];
+    }
+
+    function buildSystemPrompt(receiver, tone, topic, signature) {
+      return `你是专业的中文商务邮件润色助手。用户想发一段比较直接/口语化的内容，需要你润色成适合职场发送的邮件。
+
+规则：
+1. 必须严格基于用户原始输入的内容来改写，不能脱离用户的具体话题
+2. 收件对象是：${receiver}
+3. 期望语气是：${tone}
+4. 针对收件对象调整称呼和措辞
+5. 每个版本要有明确的风格差异
+6. 邮件正文要有称呼、正文、结尾，格式完整
+7. 如果提供了署名，在末尾加上署名；如果提供了邮件主题，可以在开头提及
+8. 不要在正文中使用 markdown 格式
+9. 输出必须是合法的 JSON，不要包含 markdown 代码块标记
+
+请输出以下 JSON 格式：
+{
+  "variants": [
+    {"title": "1｜稳妥汇报版", "desc": "态度最稳，适合发给领导", "body": "邮件正文"},
+    {"title": "2｜委婉争取版", "desc": "表达困难但不抱怨，适合争取理解", "body": "邮件正文"},
+    {"title": "3｜推进落地版", "desc": "不只说困难，还给下一步", "body": "邮件正文"},
+    {"title": "4｜简洁专业版", "desc": "短邮件版本，适合关系熟悉或快节奏沟通", "body": "邮件正文"}
+  ]
+}`;
+    }
+
+    async function generateWithAI(input, receiver, tone, topic, signature) {
+      const apiBase = document.getElementById("apiBase").value.trim();
+      const apiKey = document.getElementById("apiKey").value.trim();
+      const apiModel = document.getElementById("apiModel").value.trim() || "gpt-4o-mini";
+
+      if (!apiBase || !apiKey) {
+        throw new Error("NO_API_KEY");
+      }
+
+      const baseUrl = apiBase.endsWith("/") ? apiBase.slice(0, -1) : apiBase;
+      const url = `${baseUrl}/chat/completions`;
+
+      const systemPrompt = buildSystemPrompt(receiver, tone, topic, signature);
+      const userPrompt = `原始输入内容：\n${input}\n\n邮件主题：${topic || "（未提供）"}\n署名：${signature || "（未提供）"}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: apiModel,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 2500
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`API 请求失败 (${response.status}): ${err}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "";
+
+      // 尝试解析 JSON
+      let jsonStr = content;
+      // 去除可能的 markdown 代码块
+      const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (codeBlockMatch) {
+        jsonStr = codeBlockMatch[1].trim();
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonStr);
+      } catch (e) {
+        // 如果 JSON 解析失败，尝试提取大括号内的内容
+        const braceMatch = jsonStr.match(/\{[\s\S]*\}/);
+        if (braceMatch) {
+          parsed = JSON.parse(braceMatch[0]);
+        } else {
+          throw e;
+        }
+      }
+
+      if (!parsed.variants || !Array.isArray(parsed.variants)) {
+        throw new Error("AI 返回格式不正确，缺少 variants 数组");
+      }
+
+      // 确保每个 variant 有正确的字段
+      return parsed.variants.map((v, i) => ({
+        title: v.title || `版本 ${i + 1}`,
+        desc: v.desc || "",
+        body: v.body || ""
+      }));
+    }
+
+    async function generateMails() {
+      const input = rawText.value.trim();
+      if (!input) {
+        showToast("请先输入邮件正文");
+        rawText.focus();
+        return;
+      }
+
+      const receiver = document.getElementById("receiver").value;
+      const tone = document.getElementById("tone").value;
+      const topic = document.getElementById("topic").value.trim();
+      const signature = document.getElementById("signature").value.trim();
+
+      showLoading(true);
+
+      let variants;
+      let usedAI = false;
+
+      try {
+        variants = await generateWithAI(input, receiver, tone, topic, signature);
+        usedAI = true;
+      } catch (err) {
+        if (err.message === "NO_API_KEY") {
+          showToast("未配置 AI API，使用本地模板生成");
+        } else {
+          showToast("AI 生成失败：" + err.message + "，已切换本地模板");
+          console.error(err);
+        }
+        variants = buildFallbackVariants(input, receiver, tone, topic, signature);
+      } finally {
+        showLoading(false);
+      }
+
+      results.className = "result-list";
+      results.innerHTML = variants.map((item, index) => `
+        <article class="result-card" style="animation-delay:${index * 0.05}s">
+          <div class="result-top">
+            <div>
+              <span class="tag">${item.title}</span>
+              <div class="hint" style="margin-top:7px">${item.desc} · ${tone}${usedAI ? " · AI 生成" : ""}</div>
+            </div>
+            <button class="copy-btn" onclick="copyMail(this, ${index})">复制</button>
+          </div>
+          <div class="mail-body" id="mail-${index}">${escapeHtml(item.body)}</div>
+          <div class="quality-bar">
+            <div class="quality-item"><strong>更礼貌</strong>避免直接顶撞</div>
+            <div class="quality-item"><strong>有理由</strong>说明资源限制</div>
+            <div class="quality-item"><strong>可推进</strong>提出下一步</div>
+            <div class="quality-item"><strong>可发送</strong>结构完整清楚</div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    async function copyMail(button, index) {
+      const text = document.getElementById(`mail-${index}`).innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (error) {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        document.body.removeChild(temp);
+      }
+      button.classList.add("done");
+      button.textContent = "已复制";
+      showToast("已复制，可直接粘贴到邮件");
+      setTimeout(() => {
+        button.classList.remove("done");
+        button.textContent = "复制";
+      }, 1300);
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function loadSample() {
+      rawText.value = "领导，你说的这个我有考虑但是没有钱没有精力让我怎么做";
+      document.getElementById("topic").value = "关于项目推进资源评估";
+      document.getElementById("signature").value = "John";
+      counter.textContent = `${rawText.value.trim().length} 字`;
+      generateMails();
+    }
+
+    function clearAll() {
+      rawText.value = "";
+      document.getElementById("topic").value = "";
+      document.getElementById("signature").value = "";
+      counter.textContent = "0 字";
+      results.className = "empty";
+      results.innerHTML = "输入邮件正文后，点击生成。这里会出现 4 个可复制版本。";
+      rawText.focus();
+    }
+
+    // 页面加载时不自动填入示例，保持空白状态
+    rawText.focus();
+  </script>
+</body>
+</html>
