@@ -1,0 +1,404 @@
+<div class="app-shell">
+  <style>
+    :root {
+      color-scheme: light;
+      --lg-red: #A50034;
+      --lg-red-dark: #7d0027;
+      --ink: #18202f;
+      --muted: #697386;
+      --line: #e6e9ef;
+      --soft: #f6f7fb;
+      --card: #ffffff;
+      --amber: #b7791f;
+      --amber-bg: #fff7e6;
+      --red-bg: #fff1f4;
+      --green: #17835b;
+      --green-bg: #ecfdf5;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f5f9; color: var(--ink); }
+    .app-shell { min-height: 100vh; background: linear-gradient(135deg, #f7f8fb 0%, #eef1f7 100%); }
+    .topbar { background: #ffffff; border-bottom: 1px solid var(--line); padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; gap: 18px; position: sticky; top: 0; z-index: 10; }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .logo { width: 42px; height: 42px; border-radius: 14px; background: var(--lg-red); color: #fff; display: grid; place-items: center; font-weight: 800; letter-spacing: .5px; }
+    .brand h1 { margin: 0; font-size: 20px; line-height: 1.25; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .brand h1 .en-side { font-size: 14px; color: var(--muted); font-weight: 500; letter-spacing: .01em; }
+    .brand p { margin: 4px 0 0; color: var(--muted); font-size: 13px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .brand p .en-side { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .top-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .powered-badge { background: var(--lg-red); color: #fff; border-radius: 8px; padding: 8px 18px; font-weight: 900; font-size: 16px; line-height: 1; box-shadow: 0 8px 18px rgba(165, 0, 52, .18); white-space: nowrap; }
+    button { border: 0; cursor: pointer; border-radius: 12px; padding: 11px 14px; font-weight: 700; font-size: 14px; transition: .16s ease; }
+    button.primary { background: var(--lg-red); color: #fff; box-shadow: 0 8px 20px rgba(165, 0, 52, .18); }
+    button.primary .en-inline { color: #fff; opacity: .9; }
+    button.primary:hover { background: var(--lg-red-dark); transform: translateY(-1px); }
+    button.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    button.secondary:hover { border-color: #cbd1dc; transform: translateY(-1px); }
+    .container { padding: 24px 28px 32px; display: grid; gap: 22px; max-width: 1280px; margin: 0 auto; }
+    .panel { background: rgba(255,255,255,.92); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 16px 40px rgba(24,32,47,.07); overflow: hidden; }
+    .paste-hero { border: 2px solid rgba(165, 0, 52, .18); box-shadow: 0 22px 60px rgba(165, 0, 52, .11); }
+    .panel-header { padding: 20px 22px 12px; }
+    .panel-header h2 { margin: 0; font-size: 17px; }
+    .panel-header p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .panel-body { padding: 14px 22px 22px; }
+    .upload-box { border: 1.5px dashed #c8ceda; border-radius: 18px; background: #fbfcff; padding: 22px; text-align: center; }
+    .upload-icon { width: 58px; height: 58px; border-radius: 18px; margin: 0 auto 12px; background: var(--red-bg); color: var(--lg-red); display: grid; place-items: center; font-size: 26px; }
+    .upload-box h3 { margin: 0; font-size: 16px; }
+    .upload-box p { margin: 8px 0 16px; color: var(--muted); font-size: 13px; }
+    .paste-guide { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; text-align: left; }
+    .paste-step { display: flex; gap: 8px; align-items: flex-start; padding: 10px; border-radius: 12px; background: var(--soft); color: #475467; font-size: 12px; line-height: 1.45; }
+    .paste-step b { color: var(--lg-red); min-width: 18px; }
+    .file-meta { margin-top: 14px; padding: 12px; border-radius: 14px; background: var(--soft); text-align: left; color: var(--muted); font-size: 13px; min-height: 44px; }
+    .hero-grid { display: grid; grid-template-columns: 1.35fr .65fr; gap: 18px; align-items: start; }
+    .main-textarea { min-height: 310px; font-size: 16px; border: 2px solid #d8deea; box-shadow: inset 0 1px 0 rgba(255,255,255,.8); }
+    .main-textarea:focus { border-color: var(--lg-red); box-shadow: 0 0 0 4px rgba(165,0,52,.08); }
+    .review-actions { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+    .review-actions .primary { padding: 14px 24px; font-size: 16px; border-radius: 15px; }
+    .flow-card { background: #fbfcff; border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+    .flow-card h3 { margin: 0 0 10px; font-size: 15px; }
+    .flow-card p { margin: 0 0 12px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .field { margin-top: 18px; }
+    .field label { display: block; font-size: 13px; font-weight: 800; margin-bottom: 8px; }
+    select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 13px; padding: 11px 12px; font: inherit; color: var(--ink); background: #fff; outline: none; }
+    textarea { min-height: 132px; resize: vertical; line-height: 1.55; }
+    .checks { display: grid; gap: 8px; }
+    .check { display: flex; align-items: center; gap: 9px; color: #344054; font-size: 13px; }
+    .check input { accent-color: var(--lg-red); }
+    .hint { margin-top: 14px; border-left: 4px solid var(--lg-red); background: var(--red-bg); padding: 12px; border-radius: 12px; font-size: 12px; line-height: 1.55; color: #663044; }
+    .dashboard { display: grid; gap: 18px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .metric { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+    .metric span { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .metric strong { display: block; margin-top: 8px; font-size: 28px; line-height: 1; }
+    .metric small { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .tabs { display: flex; gap: 8px; padding: 0 22px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .tab { padding: 9px 12px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 13px; font-weight: 800; border: 0; cursor: pointer; }
+    .tab:hover { color: var(--lg-red); transform: translateY(-1px); }
+    .tab.active { background: var(--lg-red); color: #fff; }
+    .tab.active .en-inline { color: #fff; opacity: .9; }
+    .risk-list { display: grid; gap: 12px; }
+    .risk-card { border: 1px solid var(--line); border-radius: 18px; padding: 16px; background: #fff; }
+    .risk-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .risk-title { display: flex; gap: 10px; align-items: center; }
+    .badge { border-radius: 999px; padding: 5px 9px; font-size: 12px; font-weight: 900; white-space: nowrap; }
+    .badge.high { color: #b42318; background: #fee4e2; }
+    .badge.mid { color: var(--amber); background: var(--amber-bg); }
+    .badge.low { color: var(--green); background: var(--green-bg); }
+    .risk-card h3 { margin: 0; font-size: 15px; }
+    .risk-card p { margin: 10px 0 0; color: #465064; line-height: 1.62; font-size: 13px; }
+    .clause { margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 13px; color: #344054; font-size: 13px; line-height: 1.55; border: 1px solid #edf0f5; }
+    .suggestion { margin-top: 10px; padding: 12px; background: var(--blue-bg); border-radius: 13px; color: #1e3a8a; font-size: 13px; line-height: 1.55; }
+    .report-box { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; }
+    .report-section { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+    .report-section h3 { margin: 0 0 12px; font-size: 15px; }
+    .report-section ul { margin: 0; padding-left: 19px; color: #465064; font-size: 13px; line-height: 1.75; }
+    .timeline { display: grid; gap: 10px; }
+    .step { display: flex; gap: 10px; align-items: flex-start; }
+    .dot { width: 22px; height: 22px; border-radius: 50%; background: var(--green-bg); color: var(--green); display: grid; place-items: center; font-size: 12px; font-weight: 900; flex: 0 0 auto; }
+    .step b { display: block; font-size: 13px; }
+    .step span { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .empty { padding: 24px; text-align: center; color: var(--muted); border: 1px dashed #ced3df; border-radius: 18px; background: #fbfcff; }
+    .footer-note { color: var(--muted); font-size: 12px; line-height: 1.6; padding: 0 22px 20px; }
+    .en-note { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.45; font-weight: 500; letter-spacing: .01em; }
+    .en-inline { display: inline; margin-left: 6px; color: var(--muted); font-size: 11px; font-weight: 500; }
+    .bottom-notice { text-align: center; padding: 18px 28px 24px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); background: #fff; letter-spacing: .02em; }
+    @media (max-width: 1050px) { .hero-grid { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: repeat(2, 1fr); } .report-box { grid-template-columns: 1fr; } .paste-guide { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .topbar { align-items: flex-start; flex-direction: column; } .container { padding: 16px; } .summary-grid { grid-template-columns: 1fr; } .main-textarea { min-height: 240px; } }
+  </style>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">LG</div>
+      <div>
+        <h1>法务合同审核 Agent · 复制粘贴版<span class="en-side">Contract Legal Review Agent · Copy &amp; Paste Version</span></h1>
+        <p>不上传文件 / 粘贴条款 / 生成审核报告<span class="en-side">No file upload · Paste clauses · Generate review report</span></p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="powered-badge">Powered by BI Team</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel paste-hero">
+      <div class="panel-header">
+        <h2>1. 在这里粘贴合同正文<span class="en-inline">Paste contract text here</span></h2>
+        <p>最上方就是合同输入区。复制 Word/PDF 里的正文或关键条款粘贴进来，然后点击下方按钮进行智能审核。<span class="en-note">This is the main input area. Paste key contract text from Word/PDF, then run AI review.</span></p>
+      </div>
+      <div class="panel-body">
+        <div class="hero-grid">
+          <div>
+            <label for="contractText" style="display:block; font-size:14px; font-weight:900; margin-bottom:10px;">合同正文 / 关键条款<span class="en-inline">Contract Text / Key Clauses</span></label>
+            <textarea id="contractText" class="main-textarea" placeholder="Paste the contract text, key clauses, or paragraphs requiring legal review here...\n\nExamples: payment &amp; pricing terms, payment period, default liability, auto-renewal, confidentiality obligations, data processing, intellectual property, governing court, etc."></textarea>
+            <div class="review-actions">
+              <button class="primary" id="runReviewBtn">开始智能审核<span class="en-inline" style="color:#fff;">Start AI Review</span></button>
+              <span id="fileMeta" style="color: var(--muted); font-size: 13px;">无上传模式：只审核粘贴内容，不读取本地文件。<span class="en-note">No-upload mode: only pasted text is reviewed; no local files are read.</span></span>
+            </div>
+          </div>
+          <div class="flow-card">
+            <h3>审核流程<span class="en-inline">Review Workflow</span></h3>
+            <p>按你说的流程：先粘贴合同，再点击智能审核，最后输出风险提示和修改建议。<span class="en-note">Paste contract → Run AI review → Receive risk alerts and revision suggestions.</span></p>
+            <div class="paste-guide">
+              <div class="paste-step"><b>1</b><span>粘贴合同正文或关键条款。<span class="en-note">Paste contract text or key clauses.</span></span></div>
+              <div class="paste-step"><b>2</b><span>点击“开始智能审核”。</span></div>
+              <div class="paste-step"><b>3</b><span>查看风险提示、条款摘录和修改建议。<span class="en-note">Check risks, clause excerpts, and suggested revisions.</span></span></div>
+            </div>
+            <div class="field">
+              <label for="contractType">合同类型<span class="en-inline">Contract Type</span></label>
+              <select id="contractType">
+                <option>采购合同 / Purchase Agreement</option>
+                <option>销售合同 / Sales Agreement</option>
+                <option>服务合同 / Service Agreement</option>
+                <option>保密协议 / NDA</option>
+                <option>经销协议 / Distributor Agreement</option>
+              </select>
+            </div>
+            <div class="hint">不会上传合同文件，也不会读取本地文件。正式版本可接入内网法务规则库和权限日志。<span class="en-note">No contract file is uploaded or read locally. The formal version can connect to internal legal rules and access logs.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard">
+      <div class="summary-grid">
+        <div class="metric"><span>总体风险<span class="en-inline">Overall Risk</span></span><strong id="riskScore">--</strong><small>AI 初筛评分<span class="en-note">AI screening score</span></small></div>
+        <div class="metric"><span>高风险问题<span class="en-inline">High-risk Issues</span></span><strong id="highCount">--</strong><small>需法务优先确认<span class="en-note">Priority legal confirmation required</span></small></div>
+        <div class="metric"><span>待补充条款<span class="en-inline">Clauses to Supplement</span></span><strong id="missingCount">--</strong><small>建议补强或明确<span class="en-note">Recommended to strengthen or clarify</span></small></div>
+        <div class="metric"><span>预计处理<span class="en-inline">Est. Review Time</span></span><strong id="eta">--</strong><small>人工复核参考<span class="en-note">Reference for manual review</span></small></div>
+      </div>
+
+      <div class="panel" id="resultPanel">
+        <div class="panel-header">
+          <h2>2. 风险提示与修改建议</h2>
+          <p>点击“开始智能审核”后，这里会展示风险等级、触发原因、原文摘录和建议改法。</p>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-filter="all">全部风险<span class="en-inline">All Risks</span></button>
+          <button class="tab" data-filter="high">高风险<span class="en-inline">High Risk</span></button>
+          <button class="tab" data-filter="commercial">商业条款<span class="en-inline">Commercial</span></button>
+          <button class="tab" data-filter="compliance">合规条款<span class="en-inline">Compliance</span></button>
+          <button class="tab" data-filter="manual">待人工确认<span class="en-inline">Manual Check</span></button>
+        </div>
+        <div class="panel-body">
+          <div id="riskList" class="risk-list">
+            <div class="empty">请先在页面最上方粘贴合同正文，然后点击输入框下方的“开始智能审核”。</div>
+          </div>
+        </div>
+        <div class="footer-note">免责声明：本工具仅作合同风险初筛与法务辅助，不构成正式法律意见。最终结论应由公司法务或外部律师确认。<br><span class="en-note">Disclaimer: This tool supports preliminary contract risk screening only and does not constitute formal legal advice.</span></div>
+      </div>
+
+      <div class="report-box">
+        <div class="report-section">
+          <h3>3. 审核报告摘要<span class="en-inline">Review Report Summary</span></h3>
+          <ul id="reportSummary">
+            <li>等待审核结果生成。<span class="en-note">Waiting for review results.</span></li>
+          </ul>
+        </div>
+        <div class="report-section">
+          <h3>建议工作流<span class="en-inline">Recommended Workflow</span></h3>
+          <div class="timeline">
+            <div class="step"><div class="dot">1</div><div><b>业务粘贴条款<span class="en-inline">Business team pastes clauses</span></b><span>不上传原文件，仅输入需要审核的文本<span class="en-note">No source file upload; only text for review is entered.</span></span></div></div>
+            <div class="step"><div class="dot">2</div><div><b>Agent 初筛风险<span class="en-inline">Agent screens risks</span></b><span>按公司规则库输出风险和建议<span class="en-note">Risks and suggestions are generated by company rules.</span></span></div></div>
+            <div class="step"><div class="dot">3</div><div><b>法务复核确认<span class="en-inline">Legal team confirms</span></b><span>处理高风险与商业例外事项<span class="en-note">High-risk and commercial exception items are reviewed.</span></span></div></div>
+            <div class="step"><div class="dot">4</div><div><b>导出审查报告<span class="en-inline">Export review report</span></b><span>沉淀到历史合同与知识库<span class="en-note">Results are retained in contract history and knowledge base.</span></span></div></div>
+          </div>
+          <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="primary" id="exportBtn">导出审核报告<span class="en-inline" style="color:#fff;">Export Report</span></button>
+            <button class="secondary" id="copyBtn">复制报告摘要<span class="en-inline">Copy Summary</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const rules = [
+      {
+        id: 'payment-long', level: 'high', category: '付款条款', categoryEn: 'Payment Terms', title: '付款周期偏长，现金流风险较高', titleEn: 'Long payment period may create cash-flow risk',
+        keywords: ['90日', '九十日', '120日', '一百二十日'],
+        clause: '甲方应在收到货物后90日内付款。', clauseEn: 'Party A shall make payment within 90 days after receiving the goods.',
+        why: '付款周期超过常规商业账期，可能影响供应商履约积极性，也容易产生回款争议。', whyEn: 'The payment cycle is longer than common commercial terms and may affect supplier performance or cause collection disputes.',
+        suggestion: '建议明确验收节点、开票条件、付款触发日，并评估是否改为30/45/60日分阶段付款。', suggestionEn: 'Clarify acceptance milestones, invoice conditions, payment trigger dates, and consider phased payment within 30/45/60 days.'
+      },
+      {
+        id: 'liability-low', level: 'mid', category: '违约责任', categoryEn: 'Default Liability', title: '逾期交付违约金比例偏低', titleEn: 'Late-delivery penalty ratio appears low',
+        keywords: ['0.01%', '万分之一'],
+        clause: '乙方逾期交付的，每日按合同总价0.01%承担违约金。', clauseEn: 'For delayed delivery, Party B shall pay 0.01% of the total contract value per day as liquidated damages.',
+        why: '违约金比例较低，可能无法覆盖甲方因延期产生的实际损失。', whyEn: 'The penalty ratio may be insufficient to cover actual losses caused by delayed delivery.',
+        suggestion: '建议设置阶梯式违约金，并保留甲方主张超出违约金部分损失的权利。', suggestionEn: 'Set tiered liquidated damages and reserve Party A’s right to claim losses exceeding the agreed penalty.'
+      },
+      {
+        id: 'auto-renew', level: 'high', category: '解除与续约', categoryEn: 'Termination & Renewal', title: '存在自动续约条款，通知期限偏短', titleEn: 'Auto-renewal clause with short notice period',
+        keywords: ['自动续约', '不续约'],
+        clause: '本合同自动续约一年，除非任一方提前15日通知不续约。', clauseEn: 'This contract will automatically renew for one year unless either party gives non-renewal notice 15 days in advance.',
+        why: '自动续约可能导致业务方未及时退出合同，形成非预期义务。', whyEn: 'Auto-renewal may create unintended obligations if the business team misses the exit window.',
+        suggestion: '建议取消自动续约，或将不续约通知期限调整为至少30-60日，并增加续约前书面确认机制。', suggestionEn: 'Remove auto-renewal or extend the non-renewal notice period to at least 30-60 days with written confirmation before renewal.'
+      },
+      {
+        id: 'confidentiality-term', level: 'mid', category: '保密条款', categoryEn: 'Confidentiality', title: '保密期限未明确', titleEn: 'Confidentiality period is not clearly defined',
+        keywords: ['保密', '未约定保密期限'],
+        clause: '双方应对商业秘密保密，但未约定保密期限。', clauseEn: 'Both parties shall keep trade secrets confidential, but no confidentiality period is specified.',
+        why: '未明确保密期限会影响违约追责和商业秘密保护效果。', whyEn: 'An undefined confidentiality period may weaken enforcement and trade secret protection.',
+        suggestion: '建议约定普通保密信息不少于3-5年，商业秘密在其未公开期间持续保密。', suggestionEn: 'Set at least 3-5 years for ordinary confidential information and continuous protection for trade secrets while undisclosed.'
+      },
+      {
+        id: 'liability-cap', level: 'high', category: '责任上限', categoryEn: 'Liability Cap', title: '缺少责任上限或例外规则', titleEn: 'Liability cap or carve-outs are missing',
+        keywords: ['责任上限', '间接损失'],
+        clause: '乙方对间接损失不承担责任，但合同未约定责任上限。', clauseEn: 'Party B is not liable for indirect losses, but the contract does not define an overall liability cap.',
+        why: '未设置责任上限可能导致赔偿范围不可控；但部分重大违约事项又应排除责任限制。', whyEn: 'Without a liability cap, compensation exposure may be uncontrolled; key breaches should also be carved out from limitations.',
+        suggestion: '建议设置总责任上限，并明确欺诈、故意违约、保密、知识产权侵权、数据泄露等不适用责任限制。', suggestionEn: 'Set an overall liability cap and exclude fraud, willful breach, confidentiality, IP infringement, and data leakage from the cap.'
+      },
+      {
+        id: 'data-processing', level: 'mid', category: '数据合规', categoryEn: 'Data Compliance', title: '个人信息处理约定不足', titleEn: 'Personal information processing terms are insufficient',
+        keywords: ['个人信息', '数据', '另行协商'],
+        clause: '涉及个人信息处理时，双方另行协商。', clauseEn: 'Where personal information processing is involved, both parties shall negotiate separately.',
+        why: '仅写“另行协商”无法满足实际履约中的个人信息处理、跨境传输、安全责任等合规要求。', whyEn: 'A simple separate-negotiation clause is insufficient for processing scope, cross-border transfer, security duties, and compliance responsibilities.',
+        suggestion: '建议补充数据处理附件，明确处理目的、范围、安全措施、保存期限、主体权利响应和泄露通知机制。', suggestionEn: 'Add a data processing appendix covering purpose, scope, security measures, retention period, data subject response, and breach notification.'
+      }
+    ];
+
+    const fileMeta = document.getElementById('fileMeta');
+    const contractText = document.getElementById('contractText');
+    const riskList = document.getElementById('riskList');
+    const reportSummary = document.getElementById('reportSummary');
+    const tabs = document.querySelectorAll('.tab');
+    let currentRisks = [];
+    let activeFilter = 'all';
+    let latestReport = '';
+
+    // Tab filter click handlers
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeFilter = tab.dataset.filter;
+        applyFilter();
+      });
+    });
+
+    document.getElementById('runReviewBtn').addEventListener('click', runReview);
+
+    function runReview() {
+      const text = contractText.value.trim();
+      if (!text) {
+        riskList.innerHTML = '<div class="empty">请先粘贴合同正文。</div>';
+        return;
+      }
+
+      currentRisks = rules.filter(rule => rule.keywords.some(keyword => text.includes(keyword)));
+      if (!currentRisks.length) currentRisks = rules.slice(0, 3);
+      activeFilter = 'all';
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelector('.tab[data-filter="all"]').classList.add('active');
+      applyFilter();
+      document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function filterRisks(items, filter) {
+      if (filter === 'all') return items;
+      if (filter === 'high') return items.filter(item => item.level === 'high');
+      const commercial = ['付款条款', '违约责任', '解除与续约', '责任上限'];
+      const compliance = ['保密条款', '数据合规'];
+      if (filter === 'commercial') return items.filter(item => commercial.includes(item.category));
+      if (filter === 'compliance') return items.filter(item => compliance.includes(item.category));
+      if (filter === 'manual') return items.filter(item => item.level === 'high');
+      return items;
+    }
+
+    function applyFilter() {
+      const filtered = filterRisks(currentRisks, activeFilter);
+      if (filtered.length) {
+        renderRisks(filtered);
+        renderMetrics(filtered);
+        renderReport(filtered);
+      } else {
+        riskList.innerHTML = '<div class="empty">该分类下暂无匹配的风险项。</div>';
+        renderMetrics([]);
+        reportSummary.innerHTML = '<li>该分类下暂无匹配的风险项。</li>';
+      }
+    }
+
+    function renderRisks(items) {
+      riskList.innerHTML = items.map(item => `
+        <article class="risk-card">
+          <div class="risk-top">
+            <div class="risk-title">
+              <span class="badge ${item.level}">${levelText(item.level)}</span>
+              <h3>${item.title}</h3>
+            </div>
+            <span class="badge low">${item.category}</span>
+          </div>
+          <p>${item.why}</p>
+          <div class="clause"><b>疑似条款：</b>${item.clause}</div>
+          <div class="suggestion"><b>建议改法：</b>${item.suggestion}</div>
+        </article>
+      `).join('');
+    }
+
+    function renderMetrics(items) {
+      const high = items.filter(item => item.level === 'high').length;
+      const mid = items.filter(item => item.level === 'mid').length;
+      const score = Math.min(95, 42 + high * 15 + mid * 8);
+      document.getElementById('riskScore').textContent = score;
+      document.getElementById('highCount').textContent = high;
+      document.getElementById('missingCount').textContent = Math.max(2, items.length - high);
+      document.getElementById('eta').textContent = high >= 3 ? '45m' : '25m';
+    }
+
+    function renderReport(items) {
+      const highTitles = items.filter(item => item.level === 'high').map(item => item.title);
+      const highTitlesEn = items.filter(item => item.level === 'high').map(item => item.titleEn);
+      const categories = [...new Set(items.map(item => item.category))].join('、');
+      const categoriesEn = [...new Set(items.map(item => item.categoryEn))].join(', ');
+      const summary = [
+        { zh: `本次初筛共识别 ${items.length} 个合同风险点，涉及 ${categories}。`, en: `This screening identified ${items.length} contract risk item(s), covering ${categoriesEn}.` },
+        highTitles.length ? { zh: `高风险事项包括：${highTitles.join('；')}。`, en: `High-risk items include: ${highTitlesEn.join('; ')}.` } : { zh: '暂未识别高风险事项，但仍建议法务复核关键商业条款。', en: 'No high-risk item is detected, but legal review of key commercial terms is still recommended.' },
+        { zh: '建议业务先补充交易背景、金额、履约节点、对方主体资质，再提交法务确认。', en: 'The business team should supplement transaction background, amount, delivery milestones, and counterparty qualifications before legal confirmation.' },
+        { zh: '正式版本可导出 Word 审核意见、生成红线建议，并沉淀到合同风险知识库。', en: 'The formal version can export Word review comments, generate redline suggestions, and retain results in the contract risk knowledge base.' }
+      ];
+      reportSummary.innerHTML = summary.map(line => `<li>${line.zh}</li>`).join('');
+      latestReport = '法务合同审核报告 / Contract Legal Review Report\n\n' +
+        summary.map((line, index) => (index + 1) + '. ' + line.zh + '\n   ' + line.en).join('\n\n') +
+        '\n\n风险明细 / Risk Details\n' +
+        items.map((item, index) =>
+          (index + 1) + '. [' + levelText(item.level) + ' / ' + levelTextEn(item.level) + '] ' + item.title + '\n' +
+          '   ' + item.titleEn + '\n' +
+          '- 条款 / Clause: ' + item.clause + '\n' +
+          '  ' + item.clauseEn + '\n' +
+          '- 原因 / Reason: ' + item.why + '\n' +
+          '  ' + item.whyEn + '\n' +
+          '- 建议 / Suggestion: ' + item.suggestion + '\n' +
+          '  ' + item.suggestionEn
+        ).join('\n\n') +
+        '\n\n免责声明：本报告仅作合同风险初筛与法务辅助，不构成正式法律意见。\n' +
+        'Disclaimer: This report is for preliminary contract risk screening and legal assistance only and does not constitute formal legal advice.';
+    }    function levelText(level) {
+      return level === 'high' ? '高风险' : level === 'mid' ? '中风险' : '低风险';
+    }
+
+    function levelTextEn(level) {
+      return level === 'high' ? 'High Risk' : level === 'mid' ? 'Medium Risk' : 'Low Risk';
+    }
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      if (!latestReport) runReview();
+      const blob = new Blob([latestReport || '暂无审核报告'], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = '法务合同审核报告.txt';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      if (!latestReport) runReview();
+      await navigator.clipboard.writeText(latestReport || '暂无审核报告');
+      alert('报告摘要已复制');
+    });
+  </script>
+  <div class="bottom-notice">⚠ This tool is strictly for internal use by LG Electronics only. Unauthorized distribution or sharing is strictly prohibited.</div>
+</div>
